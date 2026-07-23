@@ -1,0 +1,17 @@
+{
+  "name": "Brief Group — AI Infrastructure Intelligence",
+  "short_name": "Brief Group",
+  "description": "Energy monitoring, AI fault detection, farm prediction, and automated reporting — one platform.",
+  "start_url": "/dashboard",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#FFFFFF",
+  "theme_color": "#12294F",
+  "orientation": "portrait-primary",
+  "icons": [
+    { "src": "/logo-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/logo-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/logo-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "/logo-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
