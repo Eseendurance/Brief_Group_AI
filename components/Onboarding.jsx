@@ -12,14 +12,17 @@ export default function Onboarding() {
       return true;
     }
   });
-n  function dismiss() {
+
+  function dismiss() {
     try {
       localStorage.setItem('brief:onboardShown', '1');
     } catch (e) {}
     setShow(false);
   }
-n  if (!show) return null;
-n  return (
+
+  if (!show) return null;
+
+  return (
     <div className="fixed inset-0 z-50 flex items-start justify-center p-6">
       <div className="max-w-xl w-full card p-6 shadow-card">
         <div className="flex items-start justify-between gap-4">

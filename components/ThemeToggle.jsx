@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
-nexport default function ThemeToggle({ className = '' }) {
+
+export default function ThemeToggle({ className = '' }) {
   // Initialize theme from localStorage or system preference to avoid setState in effects.
   const [theme, setTheme] = useState(() => {
     try {
@@ -12,7 +13,8 @@ import { useEffect, useState } from 'react';
       return 'light';
     }
   });
-n  useEffect(() => {
+
+  useEffect(() => {
     try {
       if (theme === 'dark') {
         document.documentElement.classList.add('dark');
