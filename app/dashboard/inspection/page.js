@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Image from 'next/image';
 import { collection, query, where, orderBy, onSnapshot } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { Eye, Upload, Loader2, AlertCircle } from 'lucide-react';
@@ -92,7 +93,7 @@ export default function InspectionPage() {
             <label className="flex flex-col items-center justify-center gap-2 border-2 border-dashed border-border rounded-xl h-40 cursor-pointer hover:border-cyan/50 transition-colors">
               <input type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
               {preview ? (
-                <img src={preview} alt="Preview" className="h-full w-full object-cover rounded-xl" />
+                <Image src={preview} alt="Preview" width={400} height={300} unoptimized className="h-full w-full object-cover rounded-xl" />
               ) : (
                 <>
                   <Upload className="text-ink-500" size={22} />
@@ -137,7 +138,7 @@ export default function InspectionPage() {
         <div className="grid sm:grid-cols-2 gap-4">
           {history.map((h) => (
             <div key={h.id} className="card p-4 flex gap-3">
-              {h.imageUrl && <img src={h.imageUrl} alt={h.assetLabel} className="w-16 h-16 object-cover rounded-lg shrink-0" />}
+              {h.imageUrl && <Image src={h.imageUrl} alt={h.assetLabel} width={64} height={64} className="w-16 h-16 object-cover rounded-lg shrink-0" />}
               <div className="min-w-0">
                 <div className="font-medium text-sm truncate">{h.assetLabel}</div>
                 <div className={clsx('inline-block text-xs px-2 py-0.5 rounded-full mt-1', RISK_STYLES[h.analysis?.riskLevel])}>
