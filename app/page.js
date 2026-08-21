@@ -41,34 +41,12 @@ function fadeUp(delay = 0) {
 export default function LandingPage() {
   return (
     <main className="min-h-screen bg-base-900 overflow-x-hidden">
-      {/* Nav */}
-      <header className="sticky top-0 z-50 backdrop-blur-md bg-base-900/80 border-b border-border">
-        <nav className="max-w-7xl mx-auto flex items-center justify-between px-6 py-4">
-          <div className="flex items-center gap-2">
-            <Image src="/logo.png" alt="Brief Group" width={36} height={36} className="h-9 w-9 object-contain" />
-            <span className="font-display font-semibold text-lg tracking-tight">Brief Group</span>
-          </div>
-          <div className="hidden md:flex items-center gap-8 text-sm text-ink-300">
-            <a href="#solutions" className="hover:text-ink-100 transition-colors">Solutions</a>
-            <Link href="/pricing" className="hover:text-ink-100 transition-colors">Pricing</Link>
-            <a href="#roadmap" className="hover:text-ink-100 transition-colors">Roadmap</a>
-            <a href="#faq" className="hover:text-ink-100 transition-colors">FAQ</a>
-            <Link href="/contact" className="hover:text-ink-100 transition-colors">Contact</Link>
-          </div>
-          <div className="flex items-center gap-3">
-            <Link href="/login" className="text-sm text-ink-300 hover:text-ink-100 transition-colors hidden sm:block">Log in</Link>
-            <Link href="/signup" className="text-sm font-medium bg-amber text-base-900 px-4 py-2 rounded-lg hover:bg-amber-soft transition-colors shadow-glow-amber">
-              Apply for Pilot
-            </Link>
-          </div>
-        </nav>
-      </header>
 
       {/* Hero */}
-      <section className="relative max-w-7xl mx-auto px-6 pt-20 pb-24 grid lg:grid-cols-2 gap-12 items-center bg-grid-fade">
+      <section className="relative max-w-7xl mx-auto px-6 pt-20 pb-24 grid lg:grid-cols-2 gap-12 items-center bg-surface">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7 }}>
           <span className="inline-flex items-center gap-2 text-xs font-medium text-amber bg-amber/10 border border-amber/20 rounded-full px-3 py-1 mb-6">
-            <span className="w-1.5 h-1.5 rounded-full bg-amber animate-nodeGlow" />
+            <span className="w-1.5 h-1.5 rounded-full bg-amber" />
             Now accepting pilot partners
           </span>
           <h1 className="font-display font-semibold text-4xl sm:text-5xl leading-[1.1] tracking-tight mb-6">
@@ -106,7 +84,7 @@ export default function LandingPage() {
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.8, delay: 0.2 }}
-          className="flex justify-center animate-floaty"
+          className="flex justify-center"
         >
           <div className="card p-10 shadow-card">
             <PulseGrid size="large" />

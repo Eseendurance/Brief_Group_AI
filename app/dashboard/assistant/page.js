@@ -34,9 +34,29 @@ export default function AssistantPage() {
 
     try {
       // Ground the assistant in the user's real, current data.
-      const energyQ = query(collection(db, 'energy_readings'), where('uid', '==', user.uid), orderBy('timestamp', 'asc'));
-      const energySnap = await getDocs(energyQ);
-      const summary = summarizeEnergy(energySnap.docs.map((d) => d.data()));
+      let energyDocs = [];
+      try {
+        const energyQ = query(collection(db, 'energy_readings'), where('uid', '==', user.uid), orderBy('timestamp', 'asc'));
+        const energySnap = await getDocs(energyQ);
+        energyDocs = energySnap.docs.map((d) => d.data());
+      } catch (e) {
+        // If Firestore requires a composite index or the query fails, fall back to a best-effort client-side approach.
+        // This avoids a hard failure in the UI and provides a graceful degraded experience.
+        console.warn('Primary energy query failed, falling back to client-side fetch', e?.message || e);
+        try {
+          const allSnap = await getDocs(collection(db, 'energy_readings'));
+          energyDocs = allSnap.docs.map((d) => d.data()).filter((r) => r.uid === user.uid || r.uid === user?.uid);
+          energyDocs.sort((a, b) => {
+            const ta = a.timestamp ? (a.timestamp.seconds ?? a.timestamp) : 0;
+            const tb = b.timestamp ? (b.timestamp.seconds ?? b.timestamp) : 0;
+            return ta - tb;
+          });
+        } catch (err) {
+          console.error('Fallback energy fetch failed', err);
+          energyDocs = [];
+        }
+      }
+      const summary = summarizeEnergy(energyDocs);
 
       const result = await authedFetch('/api/chat', {
         method: 'POST',
