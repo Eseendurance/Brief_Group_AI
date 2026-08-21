@@ -116,6 +116,28 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* Imagery Gallery */}
+      <section id="gallery" className="max-w-7xl mx-auto px-6 py-16 border-t border-border">
+        <div className="mb-8 max-w-2xl">
+          <h2 className="font-display font-semibold text-3xl">Platform imagery</h2>
+          <p className="text-ink-500 mt-2">Real visuals that reflect what Brief Group does — command centers, field inspections, warehouses, and operations rooms.</p>
+        </div>
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="card p-0 overflow-hidden">
+            <img src="/images/ai-operations-command-center.jpg" alt="AI Operations Command Center" className="w-full h-48 object-cover" />
+          </div>
+          <div className="card p-0 overflow-hidden">
+            <img src="https://images.unsplash.com/photo-1508873699372-7ae1be09a0f8?auto=format&fit=crop&w=1200&q=80" alt="Computer Vision Inspection" className="w-full h-48 object-cover" />
+          </div>
+          <div className="card p-0 overflow-hidden">
+            <img src="https://images.unsplash.com/photo-1508873535684-277a3f5a9d9b?auto=format&fit=crop&w=1200&q=80" alt="Digital Marketplace - Warehouse Logistics" className="w-full h-48 object-cover" />
+          </div>
+          <div className="card p-0 overflow-hidden">
+            <img src="/images/global-operations-strategy-room.jpg" alt="Global Operations - Strategy Room" className="w-full h-48 object-cover" />
+          </div>
+        </div>
+      </section>
+
       {/* Roadmap */}
       <section id="roadmap" className="max-w-7xl mx-auto px-6 py-24 border-t border-border">
         <motion.div {...fadeUp()} className="mb-14 max-w-2xl">
