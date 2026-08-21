@@ -5,6 +5,7 @@ import { collection, query, where, orderBy, onSnapshot } from 'firebase/firestor
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { Eye, Upload, Loader2, AlertCircle } from 'lucide-react';
 import { clsx } from 'clsx';
+import Image from 'next/image';
 import { db, storage } from '@/lib/firebase';
 import { useAuth } from '@/lib/auth-context';
 import { authedFetch } from '@/lib/api-client';
@@ -92,6 +93,8 @@ export default function InspectionPage() {
             <label className="flex flex-col items-center justify-center gap-2 border-2 border-dashed border-border rounded-xl h-40 cursor-pointer hover:border-cyan/50 transition-colors">
               <input type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
               {preview ? (
+                // preview is a local blob URL created from the uploaded file — Image doesn't work with blob URLs here
+                // eslint-disable-next-line @next/next/no-img-element
                 <img src={preview} alt="Preview" className="h-full w-full object-cover rounded-xl" />
               ) : (
                 <>
@@ -137,13 +140,17 @@ export default function InspectionPage() {
         <div className="grid sm:grid-cols-2 gap-4">
           {history.map((h) => (
             <div key={h.id} className="card p-4 flex gap-3">
-              {h.imageUrl && <img src={h.imageUrl} alt={h.assetLabel} className="w-16 h-16 object-cover rounded-lg shrink-0" />}
-              <div className="min-w-0">
-                <div className="font-medium text-sm truncate">{h.assetLabel}</div>
-                <div className={clsx('inline-block text-xs px-2 py-0.5 rounded-full mt-1', RISK_STYLES[h.analysis?.riskLevel])}>
-                  {h.analysis?.riskLevel}
-                </div>
-              </div>
+          {h.imageUrl && (
+            <div className="relative w-16 h-16 rounded-lg shrink-0 overflow-hidden">
+              <Image src={h.imageUrl} alt={h.assetLabel} fill className="object-cover" />
+            </div>
+          )}
+          <div className="min-w-0">
+            <div className="font-medium text-sm truncate">{h.assetLabel}</div>
+            <div className={clsx('inline-block text-xs px-2 py-0.5 rounded-full mt-1', RISK_STYLES[h.analysis?.riskLevel])}>
+              {h.analysis?.riskLevel}
+            </div>
+          </div>
             </div>
           ))}
         </div>

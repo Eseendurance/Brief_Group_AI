@@ -10,8 +10,8 @@ export default function AboutPage() {
           <p className="text-ink-500">We partner with operators to deliver pilot projects and practical outcomes: lower downtime, improved forecasting, and faster procurement cycles through our marketplace.</p>
         </div>
         <div>
-          <div className="w-full h-64 bg-surface border border-border rounded-lg overflow-hidden">
-            <img src="https://images.unsplash.com/photo-1581091870620-1f1f3c7f6c2b?q=80&w=1200&auto=format&fit=crop" alt="Control room" className="w-full h-full object-cover" />
+          <div className="w-full h-64 bg-surface border border-border rounded-lg overflow-hidden relative">
+            <Image src="https://images.unsplash.com/photo-1581091870620-1f1f3c7f6c2b?q=80&w=1200&auto=format&fit=crop" alt="Control room" fill className="object-cover" />
           </div>
         </div>
       </div>

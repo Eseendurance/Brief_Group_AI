@@ -123,17 +123,17 @@ export default function LandingPage() {
           <p className="text-ink-500 mt-2">Real visuals that reflect what Brief Group does — command centers, field inspections, warehouses, and operations rooms.</p>
         </div>
         <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div className="card p-0 overflow-hidden">
-            <img src="/images/ai-operations-command-center.jpg" alt="AI Operations Command Center" className="w-full h-48 object-cover" />
+          <div className="card p-0 overflow-hidden relative h-48">
+            <Image src="/images/ai-operations-command-center.jpg" alt="AI Operations Command Center" fill className="object-cover" />
           </div>
-          <div className="card p-0 overflow-hidden">
-            <img src="https://images.unsplash.com/photo-1508873699372-7ae1be09a0f8?auto=format&fit=crop&w=1200&q=80" alt="Computer Vision Inspection" className="w-full h-48 object-cover" />
+          <div className="card p-0 overflow-hidden relative h-48">
+            <Image src="https://images.unsplash.com/photo-1508873699372-7ae1be09a0f8?auto=format&fit=crop&w=1200&q=80" alt="Computer Vision Inspection" fill className="object-cover" />
           </div>
-          <div className="card p-0 overflow-hidden">
-            <img src="https://images.unsplash.com/photo-1508873535684-277a3f5a9d9b?auto=format&fit=crop&w=1200&q=80" alt="Digital Marketplace - Warehouse Logistics" className="w-full h-48 object-cover" />
+          <div className="card p-0 overflow-hidden relative h-48">
+            <Image src="https://images.unsplash.com/photo-1508873535684-277a3f5a9d9b?auto=format&fit=crop&w=1200&q=80" alt="Digital Marketplace - Warehouse Logistics" fill className="object-cover" />
           </div>
-          <div className="card p-0 overflow-hidden">
-            <img src="/images/global-operations-strategy-room.jpg" alt="Global Operations - Strategy Room" className="w-full h-48 object-cover" />
+          <div className="card p-0 overflow-hidden relative h-48">
+            <Image src="/images/global-operations-strategy-room.jpg" alt="Global Operations - Strategy Room" fill className="object-cover" />
           </div>
         </div>
       </section>
