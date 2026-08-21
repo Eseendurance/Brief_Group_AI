@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+﻿import { NextResponse } from 'next/server';
 import { verifyRequestUser } from '@/lib/firebaseAdmin';
 import { getPlan } from '@/lib/plans';
 
@@ -31,7 +31,7 @@ export async function POST(request) {
     const res = await fetch('https://api.paystack.co/transaction/initialize', {
       method: 'POST',
       headers: {
-        Authorization: `Bearer ${secretKey}`,
+        Authorization: 'Bearer ' + secretKey,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({

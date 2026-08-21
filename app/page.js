@@ -41,34 +41,12 @@ function fadeUp(delay = 0) {
 export default function LandingPage() {
   return (
     <main className="min-h-screen bg-base-900 overflow-x-hidden">
-      {/* Nav */}
-      <header className="sticky top-0 z-50 backdrop-blur-md bg-base-900/80 border-b border-border">
-        <nav className="max-w-7xl mx-auto flex items-center justify-between px-6 py-4">
-          <div className="flex items-center gap-2">
-            <Image src="/logo.png" alt="Brief Group" width={36} height={36} className="h-9 w-9 object-contain" />
-            <span className="font-display font-semibold text-lg tracking-tight">Brief Group</span>
-          </div>
-          <div className="hidden md:flex items-center gap-8 text-sm text-ink-300">
-            <a href="#solutions" className="hover:text-ink-100 transition-colors">Solutions</a>
-            <Link href="/pricing" className="hover:text-ink-100 transition-colors">Pricing</Link>
-            <a href="#roadmap" className="hover:text-ink-100 transition-colors">Roadmap</a>
-            <a href="#faq" className="hover:text-ink-100 transition-colors">FAQ</a>
-            <Link href="/contact" className="hover:text-ink-100 transition-colors">Contact</Link>
-          </div>
-          <div className="flex items-center gap-3">
-            <Link href="/login" className="text-sm text-ink-300 hover:text-ink-100 transition-colors hidden sm:block">Log in</Link>
-            <Link href="/signup" className="text-sm font-medium bg-amber text-base-900 px-4 py-2 rounded-lg hover:bg-amber-soft transition-colors shadow-glow-amber">
-              Apply for Pilot
-            </Link>
-          </div>
-        </nav>
-      </header>
 
       {/* Hero */}
-      <section className="relative max-w-7xl mx-auto px-6 pt-20 pb-24 grid lg:grid-cols-2 gap-12 items-center bg-grid-fade">
+      <section className="relative max-w-7xl mx-auto px-6 pt-20 pb-24 grid lg:grid-cols-2 gap-12 items-center bg-surface">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7 }}>
           <span className="inline-flex items-center gap-2 text-xs font-medium text-amber bg-amber/10 border border-amber/20 rounded-full px-3 py-1 mb-6">
-            <span className="w-1.5 h-1.5 rounded-full bg-amber animate-nodeGlow" />
+            <span className="w-1.5 h-1.5 rounded-full bg-amber" />
             Now accepting pilot partners
           </span>
           <h1 className="font-display font-semibold text-4xl sm:text-5xl leading-[1.1] tracking-tight mb-6">
@@ -106,7 +84,7 @@ export default function LandingPage() {
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.8, delay: 0.2 }}
-          className="flex justify-center animate-floaty"
+          className="flex justify-center"
         >
           <div className="card p-10 shadow-card">
             <PulseGrid size="large" />
@@ -135,6 +113,28 @@ export default function LandingPage() {
               <p className="text-ink-300 text-sm leading-relaxed">{m.desc}</p>
             </motion.div>
           ))}
+        </div>
+      </section>
+
+      {/* Imagery Gallery */}
+      <section id="gallery" className="max-w-7xl mx-auto px-6 py-16 border-t border-border">
+        <div className="mb-8 max-w-2xl">
+          <h2 className="font-display font-semibold text-3xl">Platform imagery</h2>
+          <p className="text-ink-500 mt-2">Real visuals that reflect what Brief Group does — command centers, field inspections, warehouses, and operations rooms.</p>
+        </div>
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="card p-0 overflow-hidden relative h-48">
+            <Image src="/images/ai-operations-command-center.jpg" alt="AI Operations Command Center" fill className="object-cover" />
+          </div>
+          <div className="card p-0 overflow-hidden relative h-48">
+            <Image src="https://images.unsplash.com/photo-1508873699372-7ae1be09a0f8?auto=format&fit=crop&w=1200&q=80" alt="Computer Vision Inspection" fill className="object-cover" />
+          </div>
+          <div className="card p-0 overflow-hidden relative h-48">
+            <Image src="https://images.unsplash.com/photo-1508873535684-277a3f5a9d9b?auto=format&fit=crop&w=1200&q=80" alt="Digital Marketplace - Warehouse Logistics" fill className="object-cover" />
+          </div>
+          <div className="card p-0 overflow-hidden relative h-48">
+            <Image src="/images/global-operations-strategy-room.jpg" alt="Global Operations - Strategy Room" fill className="object-cover" />
+          </div>
         </div>
       </section>
 

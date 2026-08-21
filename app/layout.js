@@ -4,6 +4,10 @@ import { SpeedInsights } from '@vercel/speed-insights/next';
 import './globals.css';
 import { AuthProvider } from '@/lib/auth-context';
 import InstallPrompt from '@/components/InstallPrompt';
+import ThemeProvider from '@/components/ThemeProvider';
+import Header from '@/components/Header';
+import Onboarding from '@/components/Onboarding';
+// NOTE: these client components are intentionally lightweight and safe to import in the root layout.
 
 const spaceGrotesk = Space_Grotesk({
   subsets: ['latin'],
@@ -42,7 +46,13 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en" className={`${spaceGrotesk.variable} ${inter.variable} ${jetbrainsMono.variable}`}>
       <body className="font-body bg-base-900 text-ink-100 antialiased">
-        <AuthProvider>{children}</AuthProvider>
+        <AuthProvider>
+          {/* Theme and header are client components that run on every page */}
+          <ThemeProvider />
+          <Header />
+          {children}
+          <Onboarding />
+        </AuthProvider>
         <InstallPrompt />
         <Analytics />
         <SpeedInsights />
