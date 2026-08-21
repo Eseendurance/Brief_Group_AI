@@ -1,31 +1,25 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 
 export default function Onboarding() {
-  const [show, setShow] = useState(false);
-
-  useEffect(() => {
+  // Initialize from localStorage to avoid calling setState inside an effect.
+  const [show, setShow] = useState(() => {
     try {
       const seen = localStorage.getItem('brief:onboardShown');
-      if (!seen) {
-        setShow(true);
-      }
+      return !seen; // show when not seen
     } catch (e) {
-      setShow(true);
+      return true;
     }
-  }, []);
-
-  function dismiss() {
+  });
+n  function dismiss() {
     try {
       localStorage.setItem('brief:onboardShown', '1');
     } catch (e) {}
     setShow(false);
   }
-
-  if (!show) return null;
-
-  return (
+n  if (!show) return null;
+n  return (
     <div className="fixed inset-0 z-50 flex items-start justify-center p-6">
       <div className="max-w-xl w-full card p-6 shadow-card">
         <div className="flex items-start justify-between gap-4">
