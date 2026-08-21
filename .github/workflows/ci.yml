@@ -14,7 +14,8 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '20.9'
+          # Use Node 24 to match GitHub hosted runner defaults and avoid deprecated Node 20 warnings
+          node-version: '24'
           cache: 'npm'
 
       - name: Install dependencies
