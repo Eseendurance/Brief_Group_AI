@@ -35,6 +35,27 @@ const TRUST_ITEMS = [
 
 const INDUSTRIES = ['Utilities', 'Manufacturing', 'Agri-tech', 'Infrastructure', 'Commercial facilities'];
 
+const USE_CASES = [
+  {
+    title: 'Energy monitoring',
+    href: '/solutions/energy',
+    description: 'Track production, consumption, and anomaly alerts in one operational view for site teams and leadership.',
+    image: 'https://images.unsplash.com/photo-1473341304170-971dccb5ac1e?auto=format&fit=crop&w=900&q=80',
+  },
+  {
+    title: 'Smart farming',
+    href: '/solutions/farming',
+    description: 'Connect crop health, irrigation signals, and weather conditions to reduce waste and protect yield.',
+    image: 'https://images.unsplash.com/photo-1464226184884-fa52ac9fcf8a?auto=format&fit=crop&w=900&q=80',
+  },
+  {
+    title: 'AI operations assistant',
+    href: '/solutions',
+    description: 'Answer questions, summarize readings, and surface the next best action from your platform data.',
+    image: 'https://images.unsplash.com/photo-1552664730-d307ca884978?auto=format&fit=crop&w=900&q=80',
+  },
+];
+
 const ROADMAP = [
   { step: '1', title: 'Pilot Launch', desc: 'Live accounts, protected dashboard, reports, and inspections.' },
   { step: '2', title: 'Field Intelligence', desc: 'Weather, farm signals, energy verification, real-time alerts.' },
@@ -72,7 +93,9 @@ export default function LandingPage() {
             <span className="font-display font-semibold text-lg tracking-tight text-ink-100">Brief Group</span>
           </div>
           <div className="hidden md:flex items-center gap-8 text-sm text-ink-300">
-            <a href="#solutions" className="hover:text-ink-100 transition-colors">Solutions</a>
+            <Link href="/solutions" className="hover:text-ink-100 transition-colors">Solutions</Link>
+            <Link href="/solutions/energy" className="hover:text-ink-100 transition-colors">Energy</Link>
+            <Link href="/solutions/farming" className="hover:text-ink-100 transition-colors">Farming</Link>
             <Link href="/pricing" className="hover:text-ink-100 transition-colors">Pricing</Link>
             <a href="#roadmap" className="hover:text-ink-100 transition-colors">Roadmap</a>
             <a href="#faq" className="hover:text-ink-100 transition-colors">FAQ</a>
@@ -225,6 +248,32 @@ export default function LandingPage() {
               </div>
             </div>
           </motion.div>
+        </div>
+      </section>
+
+      <section className="max-w-7xl mx-auto px-6 py-24 border-t border-border">
+        <motion.div {...fadeUp()} className="mb-12 max-w-2xl">
+          <span className="text-cyan text-sm font-medium">Use cases</span>
+          <h2 className="font-display font-semibold text-3xl sm:text-4xl mt-2 tracking-tight">
+            Built for the operations teams that keep power, farms, and infrastructure running.
+          </h2>
+        </motion.div>
+
+        <div className="grid lg:grid-cols-3 gap-6">
+          {USE_CASES.map((item, i) => (
+            <motion.div key={item.title} {...fadeUp(i * 0.08)} className="group overflow-hidden rounded-[28px] border border-border bg-white shadow-card transition-transform duration-300 hover:-translate-y-1">
+              <div className="relative h-56 overflow-hidden">
+                <Image src={item.image} alt={item.title} width={900} height={700} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
+              </div>
+              <div className="p-6">
+                <h3 className="font-display font-medium text-xl mb-2">{item.title}</h3>
+                <p className="text-ink-300 text-sm leading-relaxed mb-4">{item.description}</p>
+                <Link href={item.href} className="inline-flex items-center gap-2 text-sm font-medium text-cyan hover:text-ink-100 transition-colors">
+                  Explore this solution <ArrowRight size={16} />
+                </Link>
+              </div>
+            </motion.div>
+          ))}
         </div>
       </section>
 

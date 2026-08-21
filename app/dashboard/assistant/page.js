@@ -25,6 +25,11 @@ export default function AssistantPage() {
   async function handleSend(e) {
     e.preventDefault();
     if (!input.trim() || sending) return;
+    if (!user) {
+      setError('Please sign in to use the AI assistant.');
+      return;
+    }
+
     const userMessage = { role: 'user', content: input };
     const nextMessages = [...messages, userMessage];
     setMessages(nextMessages);
@@ -33,16 +38,17 @@ export default function AssistantPage() {
     setError('');
 
     try {
-      // Ground the assistant in the user's real, current data.
-      const energyQ = query(collection(db, 'energy_readings'), where('uid', '==', user.uid), orderBy('timestamp', 'asc'));
-      const energySnap = await getDocs(energyQ);
-      const summary = summarizeEnergy(energySnap.docs.map((d) => d.data()));
+      const energySummary = db
+        ? await getDocs(query(collection(db, 'energy_readings'), where('uid', '==', user.uid), orderBy('timestamp', 'asc')))
+            .then((snap) => summarizeEnergy(snap.docs.map((d) => d.data())))
+            .catch(() => ({ totalKwh: 0, anomalyCount: 0, trend: 'flat' }))
+        : { totalKwh: 0, anomalyCount: 0, trend: 'flat' };
 
       const result = await authedFetch('/api/chat', {
         method: 'POST',
         body: JSON.stringify({
           messages: nextMessages.map((m) => ({ role: m.role, content: m.content })),
-          context: { energySummary: summary },
+          context: { energySummary },
         }),
       });
       setMessages((prev) => [...prev, { role: 'assistant', content: result.reply }]);
