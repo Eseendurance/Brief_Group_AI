@@ -25,7 +25,8 @@ export default function ThemeToggle({ className = '' }) {
       }
     } catch (e) {}
   }, [theme]);
-n  return (
+
+  return (
     <button
       aria-label="Toggle theme"
       className={`px-3 py-2 rounded-md border border-border text-sm ${className}`}
