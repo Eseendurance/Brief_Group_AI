@@ -73,12 +73,52 @@ export async function POST(request) {
       return NextResponse.json({ error: 'messages array is required' }, { status: 400 });
     }
 
+    // Server-side: gather recent faults and inspections for stronger grounding
+    let serverContext = {};
+    try {
+      if (auth.uid) {
+        const adminDb = getAdminDb();
+        if (adminDb) {
+          // Fetch recent faults
+          const faultSnap = await adminDb.collection('fault_readings')
+            .where('uid', '==', auth.uid)
+            .orderBy('createdAt', 'desc')
+            .limit(12)
+            .get();
+          const recentFaults = faultSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
+
+          // Summarize faults: counts by level
+          const faultCounts = recentFaults.reduce((acc, f) => {
+            const lvl = f.result?.level || 'Unknown';
+            acc[lvl] = (acc[lvl] || 0) + 1;
+            return acc;
+          }, {});
+
+          // Fetch recent inspections
+          const inspSnap = await adminDb.collection('inspections')
+            .where('uid', '==', auth.uid)
+            .orderBy('createdAt', 'desc')
+            .limit(8)
+            .get();
+          const recentInspections = inspSnap.docs.map((d) => ({ id: d.id, assetLabel: d.data().assetLabel, imageUrl: d.data().imageUrl, analysis: d.data().analysis, createdAt: d.data().createdAt }));
+
+          serverContext = { recentFaults, faultCounts, recentInspections };
+        }
+      }
+    } catch (e) {
+      console.error('Failed to collect server-side context for assistant:', e);
+      // continue without blocking the request
+    }
+
     if (!apiKey) {
-      return NextResponse.json({ reply: buildFallbackReply(messages, context) });
+      // If Anthropic not configured, return deterministic fallback using both client and server context
+      const mergedContext = { ...(context || {}), ...serverContext };
+      return NextResponse.json({ reply: buildFallbackReply(messages, mergedContext) });
     }
 
     const anthropic = new Anthropic({ apiKey });
-    const contextBlock = context ? `\n\nCurrent platform data available for this user:\n${JSON.stringify(context, null, 2)}` : '';
+    const mergedContext = { ...(context || {}), ...(serverContext || {}) };
+    const contextBlock = `\n\nCurrent platform data available for this user:\n${JSON.stringify(mergedContext, null, 2)}`;
 
     const response = await anthropic.messages.create({
       model: 'claude-3-5-sonnet-latest',
@@ -93,7 +133,8 @@ export async function POST(request) {
     const { messages, context } = await request.clone().json().catch(() => ({ messages: [], context: null }));
     console.error('chat route error', err);
     if (Array.isArray(messages) && messages.length > 0) {
-      return NextResponse.json({ reply: buildFallbackReply(messages, context) });
+      const mergedContext = { ...(context || {}), ...(serverContext || {}) };
+      return NextResponse.json({ reply: buildFallbackReply(messages, mergedContext) });
     }
     return NextResponse.json({ error: err.message || 'Chat request failed' }, { status: 500 });
   }
