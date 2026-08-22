@@ -83,22 +83,10 @@ function fadeUp(delay = 0) {
   };
 }
 
-import { cookies } from 'next/headers';
-import { use } from 'react';
-
-function getVariant() {
-  // server-side: read cookie if present, otherwise return undefined so client can set
-  try {
-    const c = cookies();
-    return c.get('hero_variant')?.value;
-  } catch (e) {
-    return undefined;
-  }
-}
+import { useEffect } from 'react';
 
 export default function LandingPage() {
-  const variant = getVariant();
-
+  // The hero variant is assigned client-side via cookie (see the inline script below)
   return (
     <main className="min-h-screen bg-white text-ink-100 overflow-x-hidden">
       <header className="sticky top-0 z-50 backdrop-blur-md bg-white/80 border-b border-border">
