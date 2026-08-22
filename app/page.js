@@ -83,7 +83,22 @@ function fadeUp(delay = 0) {
   };
 }
 
+import { cookies } from 'next/headers';
+import { use } from 'react';
+
+function getVariant() {
+  // server-side: read cookie if present, otherwise return undefined so client can set
+  try {
+    const c = cookies();
+    return c.get('hero_variant')?.value;
+  } catch (e) {
+    return undefined;
+  }
+}
+
 export default function LandingPage() {
+  const variant = getVariant();
+
   return (
     <main className="min-h-screen bg-white text-ink-100 overflow-x-hidden">
       <header className="sticky top-0 z-50 backdrop-blur-md bg-white/80 border-b border-border">
@@ -126,13 +141,36 @@ export default function LandingPage() {
               farm intelligence, and remote inspection — one platform, six connected systems, born in Nigeria, built for the world.
             </p>
             <div className="flex flex-wrap gap-4 mb-10">
-              <Link href="/signup" className="inline-flex items-center gap-2 bg-amber text-white font-medium px-5 py-3 rounded-xl hover:bg-amber-soft transition-colors shadow-glow-amber">
+              <Link href="/signup" id="cta-signup" className="inline-flex items-center gap-2 bg-amber text-white font-medium px-5 py-3 rounded-xl hover:bg-amber-soft transition-colors shadow-glow-amber">
                 Start Pilot Program <ArrowRight size={16} />
               </Link>
-              <Link href="/dashboard" className="inline-flex items-center gap-2 border border-border text-ink-100 font-medium px-5 py-3 rounded-xl hover:bg-surface transition-colors">
+              <Link href="/dashboard" id="cta-dashboard" className="inline-flex items-center gap-2 border border-border text-ink-100 font-medium px-5 py-3 rounded-xl hover:bg-surface transition-colors">
                 View Dashboard
               </Link>
             </div>
+
+            <script dangerouslySetInnerHTML={{ __html: `
+              (function(){
+                try {
+                  // A/B assignment: prefer existing cookie, otherwise assign and persist
+                  const get = (k)=> document.cookie.split('; ').find(c=>c.startsWith(k+'='))?.split('=')[1];
+                  let v = get('hero_variant');
+                  if (!v) {
+                    v = Math.random() < 0.5 ? 'A' : 'B';
+                    document.cookie = 'hero_variant=' + v + '; path=/; max-age=' + 60*60*24*30;
+                  }
+                  // report exposure
+                  fetch('/api/track', { method: 'POST', headers: { 'Content-Type':'application/json' }, body: JSON.stringify({ event:'hero_exposed', variant:v, path:location.pathname }) });
+
+                  document.getElementById('cta-signup')?.addEventListener('click', function(){
+                    fetch('/api/track', { method: 'POST', headers: { 'Content-Type':'application/json' }, body: JSON.stringify({ event:'cta_click', id:'signup', variant:v, path:location.pathname }) });
+                  });
+                  document.getElementById('cta-dashboard')?.addEventListener('click', function(){
+                    fetch('/api/track', { method: 'POST', headers: { 'Content-Type':'application/json' }, body: JSON.stringify({ event:'cta_click', id:'dashboard', variant:v, path:location.pathname }) });
+                  });
+                } catch(e){ console.error('ab error', e); }
+              })();
+            ` }} />
             <div className="flex flex-wrap gap-8 text-sm">
               <div>
                 <div className="font-mono text-3xl text-amber font-medium mono-num">6</div>
