@@ -5,7 +5,7 @@ import { collection, query, where, orderBy, getDocs } from 'firebase/firestore';
 import { MessageSquare, Send, Loader2, AlertCircle } from 'lucide-react';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/lib/auth-context';
-import { authedFetch } from '@/lib/api-client';
+import { authedFetch } from '@/lib/api-client.fixed';
 import { summarizeEnergy } from '@/lib/energy-logic';
 
 export default function AssistantPage() {
