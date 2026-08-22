@@ -8,7 +8,7 @@ import { motion } from 'framer-motion';
 import { Check, Loader2, AlertCircle, ArrowLeft } from 'lucide-react';
 import { PLANS } from '@/lib/plans';
 import { useAuth } from '@/lib/auth-context';
-import { authedFetch } from '@/lib/api-client.fixed';
+import { authedFetch } from '@/lib/api-client.v2';
 
 export default function PricingPage() {
   const { user, configured } = useAuth();

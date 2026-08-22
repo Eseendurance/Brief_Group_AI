@@ -8,7 +8,7 @@ import { Eye, Upload, Loader2, AlertCircle } from 'lucide-react';
 import { clsx } from 'clsx';
 import { db, storage } from '@/lib/firebase';
 import { useAuth } from '@/lib/auth-context';
-import { authedFetch } from '@/lib/api-client.fixed';
+import { authedFetch } from '@/lib/api-client.v2';
 
 const RISK_STYLES = {
   Low: 'text-emerald bg-emerald/10 border-emerald/30',

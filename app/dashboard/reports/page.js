@@ -5,7 +5,7 @@ import { collection, query, where, orderBy, getDocs, onSnapshot } from 'firebase
 import { FileText, Loader2, AlertCircle, Sparkles } from 'lucide-react';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/lib/auth-context';
-import { authedFetch } from '@/lib/api-client.fixed';
+import { authedFetch } from '@/lib/api-client.v2';
 import { summarizeEnergy } from '@/lib/energy-logic';
 
 export default function ReportsPage() {

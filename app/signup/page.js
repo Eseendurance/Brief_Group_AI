@@ -7,7 +7,7 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { AlertCircle } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
-import { authedFetch } from '@/lib/api-client.fixed';
+import { authedFetch } from '@/lib/api-client.v2';
 import GoogleIcon from '@/components/GoogleIcon';
 
 export default function SignupPage() {
