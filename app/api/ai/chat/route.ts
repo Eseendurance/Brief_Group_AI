@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { rateLimit } from "@/app/lib/api-security";
 import { requireWorkspaceWriteAccess } from "@/app/lib/billing-access";
+import { callGeminiChat } from "@/app/lib/gemini";
 import {
   releaseWorkspaceCredits,
   reserveWorkspaceCredits,
@@ -133,37 +134,16 @@ export async function POST(request: NextRequest) {
     }
   };
 
-  const model = process.env.GEMINI_MODEL || "gemini-2.5-flash";
-  let providerResponse: Response;
+  let result;
   try {
-    providerResponse = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-goog-api-key": apiKey,
-        },
-        body: JSON.stringify({
-          systemInstruction: {
-            parts: [
-              {
-                text: `${domainGuidance[domain]} Identify yourself only as BriefGroup AI. Keep the answer concise, warm, and useful. If key context is missing, ask a clarifying question rather than inventing facts.`,
-              },
-            ],
-          },
-          contents: [{ role: "user", parts: [{ text: message }] }],
-          generationConfig: {
-            maxOutputTokens: 700,
-            temperature: 0.4,
-          },
-        }),
-        signal: AbortSignal.timeout(25_000),
-      },
-    );
+    result = await callGeminiChat({
+      model: process.env.GEMINI_MODEL || "gemini-2.5-flash",
+      systemInstruction: `${domainGuidance[domain]} Identify yourself only as BriefGroup AI. Keep the answer concise, warm, and useful. If key context is missing, ask a clarifying question rather than inventing facts.`,
+      userMessage: message,
+    });
   } catch (error) {
     await releaseReservation();
-    if (error instanceof DOMException && error.name === "TimeoutError") {
+    if (error instanceof Error && error.message.includes("timeout")) {
       return NextResponse.json(
         { error: "BriefGroup AI took too long to respond. Please try again." },
         { status: 504 },
@@ -175,56 +155,14 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  if (!providerResponse.ok) {
-    await releaseReservation();
-    if (providerResponse.status === 429) {
-      return NextResponse.json(
-        { error: "BriefGroup AI is busy right now. Please try again shortly." },
-        {
-          status: 429,
-          headers: {
-            "Retry-After": providerResponse.headers.get("retry-after") || "30",
-          },
-        },
-      );
-    }
-
-    return NextResponse.json(
-      { error: "BriefGroup AI could not complete that request. Please try again." },
-      { status: 502 },
-    );
-  }
-
-  let result: GeminiResponse;
-  try {
-    result = (await providerResponse.json()) as GeminiResponse;
-  } catch {
-    await releaseReservation();
-    return NextResponse.json(
-      { error: "BriefGroup AI returned an unreadable response. Please try again." },
-      { status: 502 },
-    );
-  }
-  const reply = result.candidates
-    ?.flatMap((candidate) => candidate.content?.parts ?? [])
-    .map((part) => part.text)
-    .find((text): text is string => typeof text === "string" && text.length > 0);
-
-  if (!reply) {
-    await releaseReservation();
-    return NextResponse.json(
-      { error: "BriefGroup AI did not return a response. Please try again." },
-      { status: 502 },
-    );
-  }
+  const reply = result.text;
 
   if (reservation && access) {
-    const promptTokens =
-      result.usageMetadata?.promptTokenCount ?? Math.ceil(message.length / 2) + 250;
+    const promptTokens = result.usage.promptTokenCount ?? Math.ceil(message.length / 2) + 250;
     const outputTokens =
-      result.usageMetadata?.candidatesTokenCount ?? Math.ceil(reply.length / 4);
+      result.usage.candidatesTokenCount ?? Math.ceil(reply.length / 4);
     const totalTokens =
-      result.usageMetadata?.totalTokenCount ?? promptTokens + outputTokens;
+      result.usage.totalTokenCount ?? promptTokens + outputTokens;
     const actualCredits = Math.max(1, promptTokens + outputTokens);
     if (actualCredits > reservation.reservedCredits) {
       await releaseReservation();
