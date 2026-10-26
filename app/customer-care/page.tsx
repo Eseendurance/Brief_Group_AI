@@ -34,7 +34,7 @@ export default function CustomerCarePage() {
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       role: "assistant",
-      text: "Hello, I am BriefGroup AI. Ask me about our platform, pilot program, dashboard, services, or how to reach the team.",
+      text: "Hello, I am Brief Group support. Ask about our platform, pilot program, dashboard, services, or how to reach the team.",
     },
   ]);
   const [input, setInput] = useState("");
@@ -151,7 +151,7 @@ export default function CustomerCarePage() {
         >
           <span className="inline-flex items-center gap-2 rounded-full bg-emerald-100 px-3 py-1 text-sm font-semibold text-emerald-800">
             <Bot className="h-4 w-4" />
-            BriefGroup AI
+            Brief Group support
           </span>
           <h1 className="mt-5 text-4xl font-semibold tracking-tight md:text-6xl">
             Ask Brief Group anything.
@@ -202,7 +202,7 @@ export default function CustomerCarePage() {
                 <MessageCircle className="h-5 w-5" />
               </span>
               <div>
-                <h2 className="font-semibold">BriefGroup AI</h2>
+                <h2 className="font-semibold">Brief Group support</h2>
                 <p className="text-sm text-slate-500">Here to help</p>
               </div>
             </div>

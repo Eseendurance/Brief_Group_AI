@@ -145,8 +145,8 @@ export default function Home() {
               </a>
             </div>
             <p className="mt-4 text-sm text-slate-500">
-              Curious first? You can try the BriefGroup AI preview below without
-              creating an account.
+              Curious first? You can try the Brief Group workspace preview below
+              without creating an account.
             </p>
           </motion.div>
 

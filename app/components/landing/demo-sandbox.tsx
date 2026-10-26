@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowUp, Bot, LoaderCircle, Sparkles } from "lucide-react";
+import { ArrowUp, LoaderCircle, MessageSquareText, Sparkles } from "lucide-react";
 import { FormEvent, useState } from "react";
 
 type Domain = "farm" | "equipment" | "inspection" | "automation";
@@ -44,7 +44,7 @@ export function DemoSandbox() {
       }
 
       if (!result.reply) {
-        throw new Error("BriefGroup AI did not return a response. Please retry.");
+        throw new Error("The Brief Group preview did not return a response. Please retry.");
       }
 
       setAnswer(result.reply);
@@ -52,7 +52,7 @@ export function DemoSandbox() {
       setError(
         requestError instanceof Error
           ? requestError.message
-          : "We could not reach BriefGroup AI. Please try again.",
+          : "We could not reach the Brief Group preview. Please try again.",
       );
     } finally {
       setIsLoading(false);
@@ -63,10 +63,10 @@ export function DemoSandbox() {
     <div className="rounded-3xl border border-emerald-100 bg-white p-5 shadow-xl shadow-emerald-900/5 sm:p-7">
       <div className="flex items-center gap-3">
         <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-800">
-          <Bot className="h-5 w-5" aria-hidden="true" />
+          <MessageSquareText className="h-5 w-5" aria-hidden="true" />
         </span>
         <div>
-          <p className="font-semibold text-slate-900">BriefGroup AI preview</p>
+          <p className="font-semibold text-slate-900">Brief Group preview</p>
           <p className="text-sm text-slate-500">A useful place to begin</p>
         </div>
         <Sparkles
