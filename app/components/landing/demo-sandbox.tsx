@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowUp, LoaderCircle, MessageSquareText, Sparkles } from "lucide-react";
+import { ArrowUp, LoaderCircle, MessageSquareText } from "lucide-react";
 import { FormEvent, useState } from "react";
 
 type Domain = "farm" | "equipment" | "inspection" | "automation";
@@ -69,10 +69,9 @@ export function DemoSandbox() {
           <p className="font-semibold text-slate-900">Brief Group preview</p>
           <p className="text-sm text-slate-500">A useful place to begin</p>
         </div>
-        <Sparkles
-          className="ml-auto h-5 w-5 text-amber-500"
-          aria-hidden="true"
-        />
+        <div className="ml-auto flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-600">
+          Preview
+        </div>
       </div>
 
       <form className="mt-6" onSubmit={handleSubmit}>
@@ -136,7 +135,7 @@ export function DemoSandbox() {
       {isLoading && (
         <div
           aria-live="polite"
-          aria-label="BriefGroup AI is preparing a response"
+          aria-label="Brief Group is preparing a response"
           className="mt-5 space-y-2"
         >
           <div className="h-3 w-4/5 animate-pulse rounded bg-slate-100" />

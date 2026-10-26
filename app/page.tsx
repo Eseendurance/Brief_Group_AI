@@ -497,16 +497,17 @@ export default function Home() {
               A first look, no sign-up needed
             </p>
             <h2 className="mt-4 text-3xl font-semibold tracking-tight text-slate-950 sm:text-5xl">
-              Ask a real question. See what BriefGroup AI can do.
+              Ask a practical question. See how Brief Group helps in context.
             </h2>
             <p className="mt-5 text-base leading-7 text-slate-600">
-              Try a small, guided preview of BriefGroup AI. It can help you
-              explore a farm, equipment, inspection, or workflow question.
+              Try a short preview of a real operational conversation. The goal is
+              not to demonstrate a chatbot gimmick, but to show how a busy team
+              could get a useful starting point for a decision.
             </p>
             <p className="mt-4 text-sm leading-6 text-slate-500">
-              Preview responses are AI-generated starting points, not
-              professional agronomy, engineering, or safety advice. Avoid
-              entering confidential or personal information.
+              Preview responses are AI-generated starting points, not professional
+              agronomy, engineering, or safety advice. Avoid entering confidential
+              or personal information.
             </p>
           </div>
           <DemoSandbox />

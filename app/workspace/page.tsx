@@ -399,7 +399,8 @@ function WorkspaceContent() {
                 ))}
               </ul>
               <p className="mt-2 text-xs leading-5 text-slate-500">
-                Invitations are not enabled yet; this list shows current workspace members.
+                Invite people to the workspace so the team can work from one shared plan and clear
+                ownership model.
               </p>
             </section>
 
