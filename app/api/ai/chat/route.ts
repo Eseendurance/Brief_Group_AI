@@ -31,19 +31,6 @@ type ChatPayload = {
   message?: unknown;
 };
 
-type GeminiResponse = {
-  candidates?: {
-    content?: {
-      parts?: { text?: string }[];
-    };
-  }[];
-  usageMetadata?: {
-    promptTokenCount?: number;
-    candidatesTokenCount?: number;
-    totalTokenCount?: number;
-  };
-};
-
 function isChatDomain(domain: unknown): domain is ChatDomain {
   return typeof domain === "string" && domain in domainGuidance;
 }

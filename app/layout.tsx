@@ -1,17 +1,14 @@
 import type { Metadata } from "next";
-import { Inter, Plus_Jakarta_Sans } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 import { Providers } from "@/app/providers";
 
-const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-body",
-  display: "swap",
-});
-
-const plusJakartaSans = Plus_Jakarta_Sans({
-  subsets: ["latin"],
-  variable: "--font-heading",
+const inter = localFont({
+  src: [
+    { path: "../public/fonts/inter-regular.woff2", weight: "400", style: "normal" },
+    { path: "../public/fonts/inter-semibold.woff2", weight: "600", style: "normal" },
+  ],
+  variable: "--font-inter",
   display: "swap",
 });
 
@@ -51,10 +48,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html
-      lang="en"
-      className={`${inter.variable} ${plusJakartaSans.variable} h-full antialiased`}
-    >
+    <html lang="en" className={`${inter.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col bg-white font-sans text-slate-800">
         <Providers>{children}</Providers>
       </body>

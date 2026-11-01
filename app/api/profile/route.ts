@@ -6,6 +6,8 @@ import {
 } from "@/app/lib/firebase-server-auth";
 import { getFirebaseAdmin } from "@/app/lib/firebase-admin";
 import { requireWorkspaceWriteAccess } from "@/app/lib/billing-access";
+import { currentTermsVersion } from "@/app/lib/legal-terms";
+import { countries } from "@/app/lib/countries";
 
 type ProfilePayload = {
   role?: unknown;
@@ -13,9 +15,12 @@ type ProfilePayload = {
   workspaceName?: unknown;
   teamSize?: unknown;
   region?: unknown;
+  acceptedTerms?: unknown;
+  termsVersion?: unknown;
 };
 
 const teamSizes = new Set(["1", "2-5", "6-20", "21+"]);
+const countryNames = new Set(countries.map((country) => country.name));
 
 export async function POST(request: NextRequest) {
   if (Number(request.headers.get("content-length") || 0) > 8_192) {
@@ -35,11 +40,22 @@ export async function POST(request: NextRequest) {
   const region = typeof body?.region === "string" ? body.region.trim() : "";
 
   if (
+    body?.acceptedTerms !== true ||
+    body.termsVersion !== currentTermsVersion
+  ) {
+    return NextResponse.json(
+      { error: "Please accept the current Account Agreement before creating an account." },
+      { status: 400 },
+    );
+  }
+
+  if (
     role.length > 80 ||
     goal.length > 80 ||
     workspaceName.length > 80 ||
     (teamSize && !teamSizes.has(teamSize)) ||
-    region.length > 80
+    region.length > 80 ||
+    (region && !countryNames.has(region))
   ) {
     return NextResponse.json({ error: "Check your profile details and try again." }, { status: 400 });
   }
@@ -55,6 +71,8 @@ export async function POST(request: NextRequest) {
       ...(workspaceName ? { workspaceName } : {}),
       ...(teamSize ? { teamSize } : {}),
       ...(region ? { region } : {}),
+      termsAcceptedAt: new Date().toISOString(),
+      termsVersion: currentTermsVersion,
       enableHealthHub: false,
       safetyReminders: true,
       updatedAt: new Date(),

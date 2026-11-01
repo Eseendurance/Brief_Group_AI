@@ -1,6 +1,10 @@
 "use client";
 
-import { createUserWithEmailAndPassword } from "firebase/auth";
+import {
+  browserLocalPersistence,
+  createUserWithEmailAndPassword,
+  setPersistence,
+} from "firebase/auth";
 import { FirebaseError } from "firebase/app";
 import { ArrowLeft, ArrowRight, Check, Sprout } from "lucide-react";
 import Image from "next/image";
@@ -8,7 +12,8 @@ import Link from "next/link";
 import { type FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { auth } from "@/app/lib/firebase";
-
+import { countries } from "@/app/lib/countries";
+import { currentTermsVersion } from "@/app/lib/legal-terms";
 const roles = [
   "Farm owner",
   "Equipment operator",
@@ -31,6 +36,7 @@ export default function RegisterPage() {
   const [workspaceName, setWorkspaceName] = useState("");
   const [teamSize, setTeamSize] = useState("1");
   const [region, setRegion] = useState("");
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [profileSavePending, setProfileSavePending] = useState(false);
@@ -59,9 +65,15 @@ export default function RegisterPage() {
       return;
     }
 
+    if (!acceptedTerms) {
+      setError("Please review and accept the account agreement before continuing.");
+      return;
+    }
+
     setIsLoading(true);
     let accountCreated = profileSavePending;
     try {
+      await setPersistence(auth, browserLocalPersistence);
       const user =
         profileSavePending && auth.currentUser
           ? auth.currentUser
@@ -83,6 +95,8 @@ export default function RegisterPage() {
           workspaceName: workspaceName.trim(),
           teamSize,
           region: region.trim(),
+          acceptedTerms: true,
+          termsVersion: currentTermsVersion,
         }),
       });
       const profileResult = (await profileResponse.json()) as { error?: string };
@@ -281,14 +295,20 @@ export default function RegisterPage() {
                     </select>
                   </label>
                   <label className="text-sm font-medium text-slate-700">
-                    Region or country
-                    <input
-                      maxLength={80}
+                    Country or territory
+                    <select
+                      required
                       value={region}
                       onChange={(event) => setRegion(event.target.value)}
                       className="mt-1.5 min-h-12 w-full rounded-xl border border-slate-200 px-4 font-normal text-slate-900 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
-                      placeholder="For example, Nigeria"
-                    />
+                    >
+                      <option value="">Choose your country</option>
+                      {countries.map((country) => (
+                        <option key={country.code} value={country.name}>
+                          {country.name}
+                        </option>
+                      ))}
+                    </select>
                   </label>
                   <label className="text-sm font-medium text-slate-700 sm:col-span-2">
                     Work email
@@ -321,6 +341,36 @@ export default function RegisterPage() {
                   BriefCare wellbeing reminders are optional and are off by
                   default. You do not need to share health information.
                 </p>
+                <label className="mt-5 flex cursor-pointer items-start gap-3 text-sm leading-6 text-slate-700">
+                  <input
+                    type="checkbox"
+                    checked={acceptedTerms}
+                    onChange={(event) => setAcceptedTerms(event.target.checked)}
+                    className="mt-1 h-4 w-4 shrink-0 accent-emerald-700"
+                  />
+                  <span>
+                    I have read and agree to the{" "}
+                    <Link
+                      href="/terms"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="font-semibold text-emerald-800 underline underline-offset-2"
+                    >
+                      Account Agreement
+                    </Link>{" "}
+                    and{" "}
+                    <Link
+                      href="/privacy"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="font-semibold text-emerald-800 underline underline-offset-2"
+                    >
+                      Privacy Notice
+                    </Link>
+                    . I understand Brief Group is an evolving service and that operational AI
+                    responses require human review.
+                  </span>
+                </label>
               </>
             )}
 

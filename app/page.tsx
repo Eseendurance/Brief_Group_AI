@@ -54,6 +54,37 @@ const assurances = [
   "Human support is one message away",
 ];
 
+const solutionCards = [
+  {
+    id: "field-intelligence",
+    label: "Field intelligence",
+    short: "See what matters across crops, sites, and shifts.",
+    detail: "Bring weather, observations, and operational context together in a single place.",
+    href: "#fieldwork",
+  },
+  {
+    id: "maintenance-ops",
+    label: "Maintenance ops",
+    short: "Prepare smaller issues before they become bigger ones.",
+    detail: "Turn inspections and maintenance notes into a clearer next-step workflow.",
+    href: "#case-studies",
+  },
+  {
+    id: "team-collaboration",
+    label: "Team collaboration",
+    short: "Keep every handoff useful, visible, and quick to review.",
+    detail: "Create a shared operating rhythm for managers, operators, and support teams.",
+    href: "#case-studies",
+  },
+  {
+    id: "partner-works",
+    label: "Partner-ready growth",
+    short: "Build a branded, scalable operating layer for your network.",
+    detail: "Add white-label settings, custom domains, and pilot-ready reporting in one place.",
+    href: "#partner-works",
+  },
+] as const;
+
 export default function Home() {
   return (
     <main className="min-h-screen overflow-hidden bg-white text-slate-800">
@@ -79,6 +110,9 @@ export default function Home() {
             <a className="transition hover:text-emerald-700" href="#platform">
               What we do
             </a>
+            <a className="transition hover:text-emerald-700" href="#solutions">
+              Solutions
+            </a>
             <a className="transition hover:text-emerald-700" href="#fieldwork">
               In the field
             </a>
@@ -101,6 +135,26 @@ export default function Home() {
             className="inline-flex min-h-11 items-center justify-center gap-2 rounded-full bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:scale-[1.02] hover:bg-emerald-800 active:scale-[0.98] sm:px-5"
           >
             Join a pilot <ArrowRight className="h-4 w-4" aria-hidden="true" />
+          </Link>
+        </div>
+        <div
+          aria-label="Explore Brief Group"
+          className="mx-auto flex max-w-7xl gap-6 overflow-x-auto px-5 pb-3 pt-1 text-sm font-medium text-slate-600 md:hidden"
+        >
+          <a className="shrink-0 hover:text-emerald-700" href="#solutions">
+            Solutions
+          </a>
+          <a className="shrink-0 hover:text-emerald-700" href="#fieldwork">
+            Field work
+          </a>
+          <a className="shrink-0 hover:text-emerald-700" href="#try-it">
+            Try it
+          </a>
+          <a className="shrink-0 hover:text-emerald-700" href="#pricing">
+            Pricing
+          </a>
+          <Link className="shrink-0 hover:text-emerald-700" href="/contact">
+            Contact
           </Link>
         </div>
       </nav>
@@ -151,6 +205,53 @@ export default function Home() {
           </motion.div>
 
           <FieldCarousel />
+        </div>
+      </section>
+
+      <section id="solutions" className="scroll-mt-24 px-5 py-16 sm:py-20">
+        <div className="mx-auto max-w-7xl">
+          <div className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
+            <div className="max-w-2xl">
+              <p className="text-sm font-semibold uppercase tracking-[0.16em] text-emerald-700">
+                Explore the platform
+              </p>
+              <h2 className="mt-4 text-3xl font-semibold tracking-tight text-slate-950 sm:text-5xl">
+                Choose the work your team wants to make clearer.
+              </h2>
+            </div>
+            <Link
+              href="/register"
+              className="inline-flex min-h-11 items-center justify-center rounded-full border border-slate-200 bg-white px-5 font-semibold text-slate-700 transition hover:border-emerald-300 hover:text-emerald-800"
+            >
+              Set up a pilot workspace
+            </Link>
+          </div>
+          <div className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            {solutionCards.map((card, index) => (
+              <a
+                key={card.id}
+                href={card.href}
+                className="group rounded-3xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:border-emerald-200 hover:shadow-lg hover:shadow-emerald-100/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-2"
+              >
+                <div className="flex items-center justify-between gap-3">
+                  <span className="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-50 text-sm font-semibold text-emerald-800">
+                    {String(index + 1).padStart(2, "0")}
+                  </span>
+                  <ChevronRight className="h-4 w-4 text-slate-400 transition group-hover:translate-x-0.5 group-hover:text-emerald-700" aria-hidden="true" />
+                </div>
+                <p className="mt-5 text-sm font-semibold uppercase tracking-[0.14em] text-emerald-700">
+                  {card.label}
+                </p>
+                <h3 className="mt-3 text-xl font-semibold leading-7 text-slate-950">
+                  {card.short}
+                </h3>
+                <p className="mt-3 text-sm leading-6 text-slate-600">{card.detail}</p>
+                <span className="mt-5 inline-flex items-center gap-1 text-sm font-semibold text-emerald-800">
+                  Explore this area <ArrowRight className="h-4 w-4" aria-hidden="true" />
+                </span>
+              </a>
+            ))}
+          </div>
         </div>
       </section>
 
@@ -254,7 +355,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="px-5 py-20 sm:py-28">
+      <section id="case-studies" className="scroll-mt-24 px-5 py-20 sm:py-28">
         <div className="mx-auto max-w-7xl">
           <div className="max-w-2xl">
             <p className="text-sm font-semibold uppercase tracking-[0.16em] text-emerald-700">
@@ -336,7 +437,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="px-5 py-20 sm:py-28">
+      <section className="scroll-mt-24 px-5 py-20 sm:py-28">
         <div className="mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-[0.8fr_1.2fr]">
           <div className="order-2 overflow-hidden rounded-[1.75rem] border border-slate-100 bg-white shadow-xl shadow-slate-200/50 lg:order-1">
             <div className="flex items-center gap-3 border-b border-slate-100 px-5 py-4">
@@ -514,7 +615,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="px-5 py-20 sm:py-24">
+      <section id="partner-works" className="scroll-mt-24 px-5 py-20 sm:py-24">
         <div className="mx-auto flex max-w-7xl flex-col items-start justify-between gap-8 rounded-[1.75rem] bg-emerald-800 px-6 py-10 text-white sm:px-10 sm:py-12 lg:flex-row lg:items-center">
           <div className="max-w-2xl">
             <p className="text-sm font-semibold uppercase tracking-[0.16em] text-emerald-100">
@@ -552,6 +653,12 @@ export default function Home() {
           <div className="flex flex-wrap gap-x-5 gap-y-2">
             <Link className="hover:text-emerald-800" href="/contact">
               Contact
+            </Link>
+            <Link className="hover:text-emerald-800" href="/terms">
+              Account agreement
+            </Link>
+            <Link className="hover:text-emerald-800" href="/privacy">
+              Privacy
             </Link>
             <Link className="hover:text-emerald-800" href="/customer-care">
               Customer care

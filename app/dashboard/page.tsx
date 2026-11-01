@@ -31,6 +31,7 @@ import {
   type ChangeEvent,
   type FormEvent,
   useEffect,
+  useEffectEvent,
   useState,
 } from "react";
 import { ProtectedRoute, useAuth } from "@/app/lib/auth";
@@ -186,22 +187,21 @@ function DashboardContent() {
     setReport(loadedReports[0] ?? null);
   }
 
+  const loadDashboardData = useEffectEvent(() => {
+    void Promise.all([loadSavedData(), loadWeather()]).catch(
+      (loadError: unknown) => {
+        setError(
+          loadError instanceof Error
+            ? loadError.message
+            : "We could not load your workspace information.",
+        );
+      },
+    );
+  });
+
   useEffect(() => {
     if (!user) return;
-
-    const timer = window.setTimeout(() => {
-      void Promise.all([loadSavedData(), loadWeather()]).catch(
-        (loadError: unknown) => {
-          setError(
-            loadError instanceof Error
-              ? loadError.message
-              : "We could not load your workspace information.",
-          );
-        },
-      );
-    }, 0);
-    // Load once per signed-in account; the user can refresh weather on demand.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    const timer = window.setTimeout(loadDashboardData, 0);
     return () => window.clearTimeout(timer);
   }, [user]);
 

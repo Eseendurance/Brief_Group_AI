@@ -1,7 +1,12 @@
 "use client";
 
 import { FirebaseError } from "firebase/app";
-import { signInWithEmailAndPassword } from "firebase/auth";
+import {
+  browserLocalPersistence,
+  sendPasswordResetEmail,
+  setPersistence,
+  signInWithEmailAndPassword,
+} from "firebase/auth";
 import { ArrowLeft, ArrowRight, LockKeyhole } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -14,29 +19,59 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isResettingPassword, setIsResettingPassword] = useState(false);
   const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
 
   async function handleLogin(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setIsLoading(true);
     setError("");
+    setNotice("");
 
     try {
-      await signInWithEmailAndPassword(auth, email, password);
-      router.push("/dashboard");
+      await setPersistence(auth, browserLocalPersistence);
+      await signInWithEmailAndPassword(auth, email.trim(), password);
+      router.replace("/dashboard");
     } catch (loginError) {
-      if (
-        loginError instanceof FirebaseError &&
-        ["auth/invalid-credential", "auth/user-not-found", "auth/wrong-password"].includes(
-          loginError.code,
-        )
-      ) {
-        setError("Those sign-in details don't match an account. Please try again.");
-      } else {
-        setError("We couldn't sign you in just now. Please try again.");
-      }
+      setError(
+        loginError instanceof FirebaseError
+          ? getLoginErrorMessage(loginError.code)
+          : "We couldn't sign you in just now. Please try again.",
+      );
     } finally {
       setIsLoading(false);
+    }
+  }
+
+  async function handlePasswordReset() {
+    const normalizedEmail = email.trim();
+    if (!normalizedEmail) {
+      setError("Enter your email address first, and we can send you a reset link.");
+      return;
+    }
+
+    setIsResettingPassword(true);
+    setError("");
+    setNotice("");
+    try {
+      await sendPasswordResetEmail(auth, normalizedEmail);
+      setNotice("If an account uses this email, a password reset link is on its way.");
+    } catch (resetError) {
+      if (
+        resetError instanceof FirebaseError &&
+        resetError.code === "auth/user-not-found"
+      ) {
+        setNotice("If an account uses this email, a password reset link is on its way.");
+        return;
+      }
+      setError(
+        resetError instanceof FirebaseError
+          ? getLoginErrorMessage(resetError.code)
+          : "We couldn't send a reset link just now. Please try again.",
+      );
+    } finally {
+      setIsResettingPassword(false);
     }
   }
 
@@ -106,6 +141,14 @@ export default function LoginPage() {
                 onChange={(event) => setPassword(event.target.value)}
                 className="min-h-12 w-full rounded-xl border border-slate-200 bg-white px-4 text-slate-900 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
               />
+              <button
+                type="button"
+                onClick={handlePasswordReset}
+                disabled={isLoading || isResettingPassword}
+                className="mt-2 text-sm font-medium text-emerald-800 underline-offset-4 hover:underline disabled:opacity-60"
+              >
+                {isResettingPassword ? "Sending reset link..." : "Forgot your password?"}
+              </button>
             </div>
             {error && (
               <p
@@ -113,6 +156,14 @@ export default function LoginPage() {
                 className="rounded-xl bg-rose-50 p-3 text-sm leading-5 text-rose-800"
               >
                 {error}
+              </p>
+            )}
+            {notice && (
+              <p
+                role="status"
+                className="rounded-xl bg-emerald-50 p-3 text-sm leading-5 text-emerald-900"
+              >
+                {notice}
               </p>
             )}
             <button
@@ -145,4 +196,29 @@ export default function LoginPage() {
       </div>
     </main>
   );
+}
+
+function getLoginErrorMessage(code: string) {
+  switch (code) {
+    case "auth/invalid-credential":
+    case "auth/user-not-found":
+    case "auth/wrong-password":
+    case "auth/invalid-email":
+      return "Those sign-in details don't match an account. Check the email and password, then try again.";
+    case "auth/user-disabled":
+      return "This account is currently disabled. Please contact the Brief Group team for help.";
+    case "auth/too-many-requests":
+      return "There have been several unsuccessful attempts. Wait a little while, then try again.";
+    case "auth/network-request-failed":
+      return "We couldn't reach the sign-in service. Check your connection and try again.";
+    case "auth/unauthorized-domain":
+      return "This website is not yet enabled for sign-in. Please contact the Brief Group team.";
+    case "auth/operation-not-allowed":
+      return "Email and password sign-in is not enabled for this service yet. Please contact the Brief Group team.";
+    case "auth/api-key-not-valid":
+    case "auth/invalid-api-key":
+      return "Sign-in is temporarily misconfigured. Please contact the Brief Group team.";
+    default:
+      return "We couldn't sign you in just now. Please try again.";
+  }
 }

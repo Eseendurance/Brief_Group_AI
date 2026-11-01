@@ -3,8 +3,8 @@
 :root {
   --background: #ffffff;
   --foreground: #0f172a;
-  --font-body: "Inter", "Segoe UI", Arial, sans-serif;
-  --font-heading: "Plus Jakarta Sans", "Segoe UI", Arial, sans-serif;
+  --font-body: var(--font-inter), "Segoe UI", Arial, sans-serif;
+  --font-heading: var(--font-inter), "Segoe UI", Arial, sans-serif;
 }
 
 @theme inline {
