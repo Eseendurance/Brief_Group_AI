@@ -11,6 +11,14 @@ random placeholder numbers. The two things that need your API keys before they l
 are the AI Assistant / Report Generator / Vision Inspection (Gemini) and everything
 auth/database related (Firebase).
 
+Company onboarding, role-managed workspaces, secure invite links, and hosted checkout
+for Stripe, Paystack, and Flutterwave are also included. The operational data model is
+still per-user in several modules; see [the roadmap](./docs/ROADMAP.md) before treating
+the app as a shared enterprise workspace.
+
+For production credentials, deployment verification, and the current domain mismatch,
+follow [the deployment checklist](./docs/DEPLOYMENT_CHECKLIST.md).
+
 ## 1. What you need to add
 
 You said you want Gemini as the default AI provider. Here's exactly what goes where:
@@ -105,12 +113,15 @@ firestore.rules / storage.rules  Per-user data isolation — deploy these, don't
 | Feature | Status |
 |---|---|
 | Auth (signup/login, Google sign-in) | Real — needs Firebase keys |
+| Company workspace and role administration | Server-authorized — needs Firebase Admin credentials and deployed rules |
+| Team invitations | Single-use invite links — administrators share links manually |
 | Energy anomaly detection | Real algorithm, works the moment you log a reading |
 | Fault risk scoring | Real weighted model, works immediately |
 | Live weather / crop health | Real — Open-Meteo, no key needed |
 | AI Assistant | Real Gemini call — needs `GEMINI_API_KEY` |
 | Automated Reports | Real Gemini call over your real data — needs `GEMINI_API_KEY` |
 | Computer Vision Inspection | Real Gemini vision call on your uploaded photo — needs `GEMINI_API_KEY` |
+| Payments | Stripe, Paystack, and Flutterwave routes — requires each provider's recurring plan IDs and live webhook setup |
 | Marketplace | Real waitlist capture to Firestore; the marketplace itself is intentionally "coming soon" per your own roadmap |
 
 ## 6. Additional API keys worth adding (pre-paying-client stage)

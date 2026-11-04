@@ -27,7 +27,7 @@ export default function LoginPage() {
     setLoading(true);
     try {
       await logIn(email.trim().toLowerCase(), password);
-      router.push('/dashboard');
+      router.push(getNextPath());
     } catch (err) {
       setError(mapAuthError(err));
     } finally {
@@ -61,7 +61,7 @@ export default function LoginPage() {
     setLoading(true);
     try {
       await logInWithGoogle();
-      router.push('/dashboard');
+      router.push(getNextPath());
     } catch (err) {
       setError(mapAuthError(err));
     } finally {
@@ -161,12 +161,29 @@ export default function LoginPage() {
 
           <p className="text-center text-sm text-ink-300 mt-6">
             No account yet?{' '}
-            <Link href="/signup" className="text-amber hover:text-amber-soft">Apply for the pilot</Link>
+            <Link
+              href="/signup"
+              onClick={(event) => {
+                event.preventDefault();
+                router.push(`/signup?next=${encodeURIComponent(getNextPath())}`);
+              }}
+              className="text-amber hover:text-amber-soft"
+            >
+              Apply for the pilot
+            </Link>
           </p>
         </div>
       </motion.div>
     </main>
   );
+}
+
+function getNextPath() {
+  if (typeof window === 'undefined') return '/dashboard';
+  const nextPath = new URLSearchParams(window.location.search).get('next');
+  return nextPath === '/onboarding' || nextPath?.startsWith('/onboarding?') || nextPath?.startsWith('/onboarding#')
+    ? nextPath
+    : '/dashboard';
 }
 
 function mapAuthError(err) {

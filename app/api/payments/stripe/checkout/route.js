@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { verifyRequestUser } from '@/lib/firebaseAdmin';
 import { getPlan } from '@/lib/plans';
+import { getSiteBaseUrl } from '@/lib/site-url';
 
 export const runtime = 'nodejs';
 
@@ -35,7 +36,7 @@ export async function POST(request) {
     }
 
     const stripe = new Stripe(secretKey);
-    const origin = request.headers.get('origin') || new URL(request.url).origin;
+    const origin = getSiteBaseUrl(request);
 
     const session = await stripe.checkout.sessions.create({
       mode: 'subscription',

@@ -42,7 +42,7 @@ export default function SignupPage() {
       await signUp(form.name.trim(), form.email.trim().toLowerCase(), form.password, form.company.trim(), form.workRole);
       authedFetch('/api/notify/welcome', { method: 'POST', body: JSON.stringify({ name: form.name.trim() }) })
         .catch((err) => console.error('welcome email failed', err)); // best-effort, never blocks navigation
-      router.push('/dashboard');
+      router.push(getNextPath());
     } catch (err) {
       setError(mapAuthError(err));
     } finally {
@@ -63,7 +63,7 @@ export default function SignupPage() {
     setLoading(true);
     try {
       await logInWithGoogle({ company: form.company.trim(), workRole: form.workRole });
-      router.push('/dashboard');
+      router.push(getNextPath());
     } catch (err) {
       setError(mapAuthError(err));
     } finally {
@@ -162,12 +162,29 @@ export default function SignupPage() {
 
           <p className="text-center text-sm text-ink-300 mt-6">
             Already have an account?{' '}
-            <Link href="/login" className="text-amber hover:text-amber-soft">Log in</Link>
+            <Link
+              href="/login"
+              onClick={(event) => {
+                event.preventDefault();
+                router.push(`/login?next=${encodeURIComponent(getNextPath())}`);
+              }}
+              className="text-amber hover:text-amber-soft"
+            >
+              Log in
+            </Link>
           </p>
         </div>
       </motion.div>
     </main>
   );
+}
+
+function getNextPath() {
+  if (typeof window === 'undefined') return '/onboarding';
+  const nextPath = new URLSearchParams(window.location.search).get('next');
+  return nextPath === '/onboarding' || nextPath?.startsWith('/onboarding?') || nextPath?.startsWith('/onboarding#')
+    ? nextPath
+    : '/onboarding';
 }
 
 function mapAuthError(err) {

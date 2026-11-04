@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { verifyRequestUser } from '@/lib/firebaseAdmin';
 import { getPlan } from '@/lib/plans';
+import { getSiteBaseUrl } from '@/lib/site-url';
 
 export const runtime = 'nodejs';
 
@@ -25,9 +26,16 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Invalid plan' }, { status: 400 });
     }
 
-    const origin = request.headers.get('origin') || new URL(request.url).origin;
+    const planCode = plan.paystackPlanCodeEnv && process.env[plan.paystackPlanCodeEnv];
+    if (!planCode) {
+    return NextResponse.json(
+      { error: `Paystack recurring plan ID is missing. Configure ${plan.paystackPlanCodeEnv}.` },
+      { status: 503 }
+    );
+    }
 
-    // Paystack amounts are in kobo (₦1 = 100 kobo).
+    const origin = getSiteBaseUrl(request);
+
     const res = await fetch('https://api.paystack.co/transaction/initialize', {
       method: 'POST',
       headers: {
@@ -36,8 +44,8 @@ export async function POST(request) {
       },
       body: JSON.stringify({
         email: authResult.email,
-        amount: plan.priceNaira * 100,
         currency: 'NGN',
+        plan: planCode,
         callback_url: `${origin}/dashboard/settings?upgraded=1`,
         // metadata ties the payment back to the Firebase uid so the webhook
         // knows whose plan to upgrade.

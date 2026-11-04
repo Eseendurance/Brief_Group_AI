@@ -24,7 +24,7 @@ export default function PricingPage() {
     setError('');
     setLoadingPlan(`${planId}-${provider}`);
     try {
-      const endpoint = provider === 'stripe' ? '/api/payments/stripe/checkout' : '/api/payments/paystack/checkout';
+      const endpoint = `/api/payments/${provider}/checkout`;
       const data = await authedFetch(endpoint, { method: 'POST', body: JSON.stringify({ planId }) });
       // Stripe/Paystack checkout pages live on their own domains, so this has
       // to be a real browser navigation, not a Next.js route — that's a
@@ -129,6 +129,14 @@ export default function PricingPage() {
                     {loadingPlan === `${plan.id}-stripe` && <Loader2 className="animate-spin" size={14} />}
                     Pay with Stripe
                   </button>
+                  <button
+                    onClick={() => handleCheckout(plan.id, 'flutterwave')}
+                    disabled={loadingPlan !== null || !configured}
+                    className="w-full flex items-center justify-center gap-2 border border-border text-sm font-medium py-2.5 rounded-lg hover:bg-base-800 transition-colors disabled:opacity-50"
+                  >
+                    {loadingPlan === `${plan.id}-flutterwave` && <Loader2 className="animate-spin" size={14} />}
+                    Pay with Flutterwave
+                  </button>
                 </div>
               )}
             </motion.div>
@@ -136,8 +144,8 @@ export default function PricingPage() {
         </div>
 
         <p className="text-center text-xs text-ink-500 mt-10">
-          Paystack is recommended for Nigerian cards and bank transfers. Stripe is recommended for
-          international cards. Both charge in the currency shown above.
+          Paystack and Flutterwave are available for Nigerian customers. Stripe is available for international cards.
+          Configure each provider's recurring plan IDs and webhooks before accepting live payments.
         </p>
       </div>
     </main>

@@ -41,7 +41,7 @@ export default function TermsPage() {
 
         <h2 className="font-display font-semibold text-ink-100 text-lg mt-8 mb-2">3. Subscriptions and billing</h2>
         <p className="mb-4">
-          Paid plans are billed in advance on a recurring basis via Stripe or Paystack, per the plan you
+          Paid plans are billed in advance on a recurring basis via Stripe, Paystack, or Flutterwave, per the plan you
           select at checkout. You can cancel at any time from Settings; cancellation takes effect at the end
           of the current billing period. Fees already paid are non-refundable except where required by law.
         </p>

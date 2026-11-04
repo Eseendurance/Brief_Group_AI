@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
@@ -9,6 +10,7 @@ import {
   ShieldCheck, NotebookPen, BrainCircuit, Headset, Wrench, MapPinned, BarChart3,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
+import { authedFetch } from '@/lib/api-client';
 
 const NAV_GROUPS = [
   {
@@ -53,6 +55,20 @@ export default function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const { user, logOut } = useAuth();
+  const [companyRole, setCompanyRole] = useState('');
+
+  useEffect(() => {
+    if (!user) return;
+    let active = true;
+    authedFetch('/api/companies')
+      .then((data) => {
+        if (active) setCompanyRole(data.membership?.role || '');
+      })
+      .catch((error) => console.error('workspace role lookup failed', error));
+    return () => {
+      active = false;
+    };
+  }, [user]);
 
   async function handleLogout() {
     await logOut();
@@ -73,7 +89,7 @@ export default function Sidebar() {
               {group.label}
             </div>
             <div className="space-y-0.5">
-              {group.items.map((item) => {
+              {group.items.filter((item) => item.href !== '/dashboard/admin' || ['owner', 'admin', 'manager'].includes(companyRole)).map((item) => {
                 const active = pathname === item.href;
                 return (
                   <Link

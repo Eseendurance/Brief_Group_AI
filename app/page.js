@@ -92,12 +92,12 @@ export default function LandingPage() {
               <div className="text-ink-500">Core SaaS modules</div>
             </div>
             <div>
-              <div className="font-mono text-2xl text-cyan font-medium mono-num">24/7</div>
-              <div className="text-ink-500">Monitoring posture</div>
+              <div className="font-mono text-2xl text-cyan font-medium mono-num">5</div>
+              <div className="text-ink-500">Company access roles</div>
             </div>
             <div>
-              <div className="font-mono text-2xl text-emerald font-medium mono-num">100%</div>
-              <div className="text-ink-500">Protected routes</div>
+              <div className="font-mono text-2xl text-emerald font-medium mono-num">7 days</div>
+              <div className="text-ink-500">Secure team invitations</div>
             </div>
           </div>
         </motion.div>

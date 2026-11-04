@@ -25,7 +25,7 @@ export default function PrivacyPage() {
 
         <h2 className="font-display font-semibold text-ink-100 text-lg mt-8 mb-2">1. What we collect</h2>
         <ul className="list-disc pl-5 space-y-1 mb-4">
-          <li><strong>Account data:</strong> name, email, company, and authentication credentials (handled by Firebase Authentication — we never see or store your raw password).</li>
+          <li><strong>Account and company profile data:</strong> name, email, organization name, country, region, industry, organization size, website, phone, and address when provided. Authentication credentials are handled by Firebase Authentication — we never see or store your raw password.</li>
           <li><strong>Operational data you submit:</strong> energy readings, equipment sensor values, uploaded inspection photos, and any text you send the AI Assistant.</li>
           <li><strong>Payment data:</strong> if you subscribe to a paid plan, billing details are collected and processed directly by Stripe and/or Paystack — we do not store your card number.</li>
           <li><strong>Usage data:</strong> pages visited and basic performance metrics via Vercel Analytics, used in aggregate, not tied to advertising.</li>

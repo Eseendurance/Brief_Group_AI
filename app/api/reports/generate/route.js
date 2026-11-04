@@ -3,6 +3,7 @@ import { verifyRequestUser, getAdminDb } from '@/lib/firebaseAdmin';
 import { FieldValue } from 'firebase-admin/firestore';
 import { checkRateLimit, rateLimitFailure } from '@/lib/rate-limit';
 import { requireActiveAccess } from '@/lib/subscription';
+import { getCompanyContext, canWriteOperationalData } from '@/lib/company-access';
 import { generateGeminiText } from '@/lib/ai-provider';
 
 export const runtime = 'nodejs';
@@ -16,6 +17,13 @@ export async function POST(request) {
   const access = await requireActiveAccess(getAdminDb(), authResult.uid);
   if (!access.allowed) {
     return NextResponse.json({ error: access.error }, { status: access.status });
+  }
+  const companyContext = await getCompanyContext(getAdminDb(), authResult.uid);
+  if (companyContext.error) {
+    return NextResponse.json({ error: companyContext.error }, { status: companyContext.status });
+  }
+  if (companyContext.membership && !canWriteOperationalData(companyContext.membership.role)) {
+    return NextResponse.json({ error: 'Viewer accounts cannot generate or save reports.' }, { status: 403 });
   }
 
   // Report generation is a longer, more expensive Gemini call — capped tighter than chat.

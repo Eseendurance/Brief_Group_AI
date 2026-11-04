@@ -1,0 +1,155 @@
+# Brief Group production deployment checklist
+
+This checklist is for the Next.js application in this repository. A successful build
+does not prove that Firebase, payment providers, DNS, or account flows are configured.
+Complete the staging checks before sending real clients to production.
+
+## 1. Confirm the Vercel project and domains
+
+The supplied screenshots show `brief-group-ai.vercel.app` serving the repository's
+older landing page, while `www.briefgroup.net` serves a different, newer marketing
+experience. The Vercel project screenshot lists `www.briefgroup.net` and
+`brief-group-ai.vercel.app`; it does not show the apex `briefgroup.net`. The apex
+currently redirects to `www`, so both hostnames must be traced to their Vercel projects.
+
+- In Vercel, verify the project's Git repository is `Eseendurance/Brief_Group_AI`,
+  its production branch is `main`, and its Root Directory points to this Next.js app.
+- Confirm the newest production deployment was built from the intended commit and
+  that both `brief-group-ai.vercel.app` and the desired production hostname are assigned
+  to that deployment.
+- Decide which source owns the newer `briefgroup.net` experience. If that experience
+  is built from a different repository, connect its source or port that experience into
+  this repository before moving its domain. Do not repoint the domain blindly: doing so
+  would replace the current marketing site with this repository's older landing page.
+- If this repository is the intended production app, add both `briefgroup.net` and
+  `www.briefgroup.net` to the same Vercel project. Choose one canonical hostname and
+  configure the other to redirect to it. Use the exact DNS records Vercel displays for
+  this project, remove conflicting records only after confirming ownership, and wait
+  for Vercel's domain verification and TLS certificate.
+- Re-test the two hostnames and the Vercel alias in a private browser window after
+  deployment. Their page title, build version, login/register paths, and assets should
+  match. If they do not, check the domain's assigned project/deployment and DNS cache.
+
+## 2. Configure Vercel environment variables
+
+Set values separately for Production and Preview. Use test-mode payment credentials
+for previews and never add secrets to `NEXT_PUBLIC_*`.
+
+### Firebase
+
+- `NEXT_PUBLIC_FIREBASE_API_KEY`
+- `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN`
+- `NEXT_PUBLIC_FIREBASE_PROJECT_ID`
+- `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET`
+- `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID`
+- `NEXT_PUBLIC_FIREBASE_APP_ID`
+- `FIREBASE_ADMIN_PROJECT_ID`
+- `FIREBASE_ADMIN_CLIENT_EMAIL`
+- `FIREBASE_ADMIN_PRIVATE_KEY` (store the service-account key as a protected secret)
+- `SITE_BASE` (canonical HTTPS URL used for invitation and payment return links)
+
+In Firebase Authentication, enable the sign-in methods the app offers and add every
+production, preview, and local host used for sign-in to Authorized domains. Create
+Firestore and Storage, then deploy the repository rules:
+
+```powershell
+npx firebase-tools deploy --only firestore:rules,storage
+```
+
+Use the correct Firebase project explicitly if your CLI default is not the production
+project:
+
+```powershell
+npx firebase-tools use <firebase-project-id>
+npx firebase-tools deploy --only firestore:rules,storage
+```
+
+The repository includes `firebase.json`, `firestore.rules`, and `storage.rules`.
+Company documents and invitations are server-managed through Firebase Admin and are
+intentionally not readable or writable from client SDKs.
+
+### AI and abuse controls
+
+- `GEMINI_API_KEY`
+- `UPSTASH_REDIS_REST_URL`
+- `UPSTASH_REDIS_REST_TOKEN`
+
+Production AI endpoints fail closed when rate limiting is not configured. Confirm the
+Gemini project has the required quota and that prompts/images sent to the provider are
+covered by your customer privacy notice and provider terms.
+
+### Stripe
+
+- `STRIPE_SECRET_KEY`
+- `STRIPE_WEBHOOK_SECRET`
+- `STRIPE_PRICE_STARTER`
+- `STRIPE_PRICE_GROWTH`
+- `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` when needed by client-side Stripe surfaces
+- Configure a recurring Stripe Price for each plan at the displayed currency/amount.
+- Register `https://<canonical-host>/api/webhooks/stripe` and subscribe to checkout
+  completion and subscription cancellation events.
+
+### Paystack
+
+- `PAYSTACK_SECRET_KEY`
+- `PAYSTACK_PLAN_STARTER`
+- `PAYSTACK_PLAN_GROWTH`
+- Create recurring NGN plans whose amounts and intervals exactly match the pricing page.
+- Register `https://<canonical-host>/api/webhooks/paystack` and configure the matching
+  Paystack webhook secret.
+
+### Flutterwave
+
+- `FLUTTERWAVE_SECRET_KEY`
+- `FLUTTERWAVE_WEBHOOK_SECRET` (the webhook verification hash from Flutterwave)
+- `FLUTTERWAVE_PLAN_STARTER`
+- `FLUTTERWAVE_PLAN_GROWTH`
+- Create recurring NGN payment plans with amounts/intervals matching the pricing page.
+- Register `https://<canonical-host>/api/webhooks/flutterwave` and select the successful
+  charge and subscription lifecycle events supported by the account.
+- The hosted checkout is server-created and the payment webhook verifies the transaction
+  with Flutterwave before granting a plan. The public key is not used by this hosted
+  server-side checkout flow.
+- Flutterwave payment-plan subscriptions currently support tokenizable card payments;
+  confirm the methods enabled in your account before presenting this as a bank-transfer
+  subscription option. See [Flutterwave recurring payments](https://developer.flutterwave.com/docs/recurring-payments).
+
+### Transactional email
+
+- `RESEND_API_KEY`
+- `RESEND_FROM_EMAIL`
+
+Verify the sending domain before sending client invitations or account mail. The team
+invite flow currently returns a single-use link that an administrator can share; email
+delivery of company invitations is not wired into the invitation endpoint yet.
+
+## 3. Deploy and verify
+
+- Confirm CI passes `npm ci`, `npm run lint`, and `npm run build` on the intended commit.
+- Deploy to a Preview environment first, with separate Firebase and payment test projects.
+- Verify signup, login, password reset, company onboarding, and Google sign-in.
+- Create an owner workspace; invite a different email; accept the link with that email;
+  verify wrong-email, expired, reused, and already-member cases fail.
+- Confirm owners/admins can manage company details, managers can invite only members and
+  viewers, and viewers cannot create energy/fault entries, reports, or inspections.
+- Test denied direct Firestore/Storage writes for viewers; deploy and test rules in a
+  non-production Firebase project before rollout.
+- Test each payment provider in test mode and verify that a plan is granted only after a
+  signed/verified provider event. Test cancellation/failed-payment lifecycle behavior
+  before describing subscriptions as fully automated.
+- Check Vercel function logs for auth, Firebase Admin, Gemini, webhook, and rate-limit
+  errors. Never paste service-account keys, API keys, or signed webhook bodies into
+  tickets or chat.
+- Promote the validated deployment and confirm both domain aliases resolve to the same
+  production build.
+
+## Known release gates
+
+- Organization-wide operational data sharing is not yet migrated: several operational
+  modules still scope records to individual user IDs.
+- Billing cancellation, refunds, invoices, tax handling, and entitlement reconciliation
+  need end-to-end testing with each live provider.
+- Legal/safety content must be reviewed by qualified local professionals before it is
+  represented as compliance advice for a jurisdiction.
+- Establish backups, restore drills, monitoring/alerting, support ownership, retention
+  policies, and a client incident-response process before broad production use.
