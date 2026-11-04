@@ -34,18 +34,18 @@ export default function PrivacyPage() {
         <h2 className="font-display font-semibold text-ink-100 text-lg mt-8 mb-2">2. How we use it</h2>
         <ul className="list-disc pl-5 space-y-1 mb-4">
           <li>To operate the dashboard: store your readings, compute anomaly/fault scores, and display them back to you.</li>
-          <li>To generate AI features you request: report text, chat replies, and image inspection findings are sent to Anthropic's Claude API for processing. We do not sell this data or use it to train models.</li>
+          <li>To generate AI features you request: report text, chat replies, and image inspection findings are sent to Google Gemini for processing. We do not sell this data or use it to train models.</li>
           <li>To send account-related email (welcome messages, waitlist confirmations) via Resend.</li>
-          <li>To process payments via Stripe and/or Paystack for paid subscriptions.</li>
+          <li>To process payments via Stripe, Paystack, and/or Flutterwave for paid subscriptions.</li>
           <li>To keep the platform secure — rate limiting and abuse prevention via Upstash.</li>
         </ul>
 
         <h2 className="font-display font-semibold text-ink-100 text-lg mt-8 mb-2">3. Who we share data with</h2>
         <p className="mb-4">
           We share data only with the service providers required to run the platform: Firebase/Google Cloud
-          (authentication, database, storage), Anthropic (AI processing of content you submit), Stripe and
-          Paystack (payment processing), Resend (transactional email), and Upstash (rate limiting). We do not
-          sell your data to third parties or brokers.
+          (authentication, database, storage), Google Gemini (AI processing of content you submit), Stripe,
+          Paystack, and Flutterwave (payment processing), Resend (transactional email), and Upstash (rate limiting).
+          We do not sell your data to third parties or brokers.
         </p>
 
         <h2 className="font-display font-semibold text-ink-100 text-lg mt-8 mb-2">4. Data retention</h2>

@@ -6,6 +6,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { clsx } from 'clsx';
 import {
   LayoutGrid, Zap, Sprout, Cpu, FileText, Eye, ShoppingBag, MessageSquare, LogOut, Settings, Sparkles,
+  ShieldCheck, NotebookPen, BrainCircuit, Headset, Wrench, MapPinned, BarChart3,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 
@@ -25,6 +26,18 @@ const NAV_GROUPS = [
       { href: '/dashboard/reports', label: 'Automated Reports', icon: FileText },
       { href: '/dashboard/inspection', label: 'Computer Vision', icon: Eye },
       { href: '/dashboard/assistant', label: 'AI Assistant', icon: MessageSquare },
+    ],
+  },
+  {
+    label: 'Operations',
+    items: [
+      { href: '/dashboard/equipment', label: 'Equipment', icon: Wrench },
+      { href: '/dashboard/safety', label: 'Safety & Compliance', icon: ShieldCheck },
+      { href: '/dashboard/maps', label: 'Maps', icon: MapPinned },
+      { href: '/dashboard/notes', label: 'AI Notes', icon: NotebookPen },
+      { href: '/dashboard/recommendations', label: 'Recommendations', icon: BrainCircuit },
+      { href: '/dashboard/support', label: 'Support Assistant', icon: Headset },
+      { href: '/dashboard/admin', label: 'Admin Dashboard', icon: BarChart3 },
     ],
   },
   {

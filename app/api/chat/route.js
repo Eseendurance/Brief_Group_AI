@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
-import Anthropic from '@anthropic-ai/sdk';
 import { verifyRequestUser, getAdminDb } from '@/lib/firebaseAdmin';
 import { checkRateLimit, clientIp, rateLimitFailure } from '@/lib/rate-limit';
 import { requireActiveAccess } from '@/lib/subscription';
+import { generateGeminiText } from '@/lib/ai-provider';
 
 export const runtime = 'nodejs';
 
@@ -18,21 +18,9 @@ is used by operations teams making real decisions, not a marketing chatbot. If y
 to answer precisely, say what additional reading or module would give the answer.`;
 
 export async function POST(request) {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) {
-    return NextResponse.json(
-      { error: 'AI assistant is not configured yet. Add ANTHROPIC_API_KEY in your environment variables.' },
-      { status: 503 }
-    );
-  }
-
-  // Rate limit by authenticated uid when available, otherwise by IP — caps
-  // real Anthropic spend per requester. See lib/rate-limit.js.
   const auth = await verifyRequestUser(request);
   const identifier = auth.uid || clientIp(request);
 
-  // Trial gate only applies to logged-in accounts — there's nothing to gate
-  // for anonymous/public assistant use, that's covered by IP rate limiting below.
   if (auth.uid) {
     const access = await requireActiveAccess(getAdminDb(), auth.uid);
     if (!access.allowed) {
@@ -73,21 +61,21 @@ export async function POST(request) {
       return NextResponse.json({ error: 'The conversation is too large. Shorten it and try again.' }, { status: 413 });
     }
 
-    const anthropic = new Anthropic({ apiKey });
-
     const contextBlock = context
       ? `\n\nCurrent platform data available for this user:\n${JSON.stringify(context, null, 2)}`
       : '';
 
-    const response = await anthropic.messages.create({
-      model: 'claude-sonnet-4-6',
-      max_tokens: 1024,
-      system: SYSTEM_PROMPT + contextBlock,
-      messages: messages.map((m) => ({ role: m.role, content: m.content })),
+    const prompt = messages.map((m) => `${m.role}: ${m.content}`).join('\n');
+    const result = await generateGeminiText({
+      systemPrompt: SYSTEM_PROMPT + contextBlock,
+      userPrompt: prompt,
     });
 
-    const textBlock = response.content.find((b) => b.type === 'text');
-    return NextResponse.json({ reply: textBlock?.text || '' });
+    if (!result.ok) {
+      return NextResponse.json({ error: result.error || 'Gemini request failed' }, { status: 503 });
+    }
+
+    return NextResponse.json({ reply: result.text || '' });
   } catch (err) {
     console.error('chat route error', err);
     return NextResponse.json({ error: err.message || 'Chat request failed' }, { status: 500 });

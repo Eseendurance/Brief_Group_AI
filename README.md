@@ -2,22 +2,22 @@
 
 A real, working full-stack Next.js app for Brief Group: Smart Energy Monitoring, AI Fault
 Detection, Smart Farm Prediction, Automated Reports, Computer Vision Inspection, an AI
-Assistant, and a Digital Marketplace waitlist — with real Firebase auth/data, real live
-weather data, and real Claude-powered reports/chat/vision analysis.
+Assistant, and a Digital Marketplace waitlist — with real Firebase auth/data, live
+weather data, and Gemini-powered reports/chat/vision analysis.
 
 Nothing in here is mocked: every module reads and writes real Firestore data, and the
 scoring logic (energy anomaly detection, fault risk, crop health) is real math, not
 random placeholder numbers. The two things that need your API keys before they light up
-are the AI Assistant / Report Generator / Vision Inspection (Claude) and everything
+are the AI Assistant / Report Generator / Vision Inspection (Gemini) and everything
 auth/database related (Firebase).
 
 ## 1. What you need to add
 
-You said you have every key except Claude's. Here's exactly what goes where:
+You said you want Gemini as the default AI provider. Here's exactly what goes where:
 
 1. Copy `.env.local.example` to `.env.local`
 2. Fill in your **Firebase** project keys (client + admin — see below for where to get each)
-3. Leave `ANTHROPIC_API_KEY` blank for now — the AI Assistant, Report Generator, and
+3. Add a valid `GEMINI_API_KEY` (or `GOOGLE_API_KEY`) — the AI Assistant, Report Generator, and
    Vision Inspection pages will show a clear "not configured yet" message instead of
    crashing until you add it.
 4. Weather uses **Open-Meteo** by default, which needs no API key at all. If you'd rather
@@ -86,9 +86,9 @@ app/
     energy/                    Energy Monitoring — Firestore + rolling z-score anomaly detection
     fault-detection/           AI Fault Detection — weighted risk scoring model
     farm/                      Smart Farm Prediction — live weather + crop-health scoring
-    reports/                   Automated Reports — Claude-generated from real data
-    inspection/                Computer Vision — Firebase Storage upload + Claude vision analysis
-    assistant/                 AI Assistant — Claude chat grounded in your data
+    reports/                   Automated Reports — Gemini-generated from real data
+    inspection/                Computer Vision — Firebase Storage upload + Gemini vision analysis
+    assistant/                 AI Assistant — Gemini chat grounded in your data
     marketplace/                Coming soon + real waitlist capture
   api/                        Server routes (weather, chat, reports, vision, waitlist)
 lib/
@@ -108,9 +108,9 @@ firestore.rules / storage.rules  Per-user data isolation — deploy these, don't
 | Energy anomaly detection | Real algorithm, works the moment you log a reading |
 | Fault risk scoring | Real weighted model, works immediately |
 | Live weather / crop health | Real — Open-Meteo, no key needed |
-| AI Assistant | Real Claude call — needs `ANTHROPIC_API_KEY` |
-| Automated Reports | Real Claude call over your real data — needs `ANTHROPIC_API_KEY` |
-| Computer Vision Inspection | Real Claude vision call on your uploaded photo — needs `ANTHROPIC_API_KEY` |
+| AI Assistant | Real Gemini call — needs `GEMINI_API_KEY` |
+| Automated Reports | Real Gemini call over your real data — needs `GEMINI_API_KEY` |
+| Computer Vision Inspection | Real Gemini vision call on your uploaded photo — needs `GEMINI_API_KEY` |
 | Marketplace | Real waitlist capture to Firestore; the marketplace itself is intentionally "coming soon" per your own roadmap |
 
 ## 6. Additional API keys worth adding (pre-paying-client stage)
@@ -121,7 +121,7 @@ each just no-ops with a clear message until configured:
 
 | Priority | Key | Why | Cost |
 |---|---|---|---|
-| 🔴 High | `UPSTASH_REDIS_REST_URL` / `TOKEN` | **Caps your Claude spend.** Without it, nothing stops a bot or one enthusiastic user from hammering `/api/chat`, `/api/reports/generate`, or `/api/vision/analyze` in a loop — each call costs you real money. Now wired in with sane limits (30 chats/hr, 15 reports/day, 20 inspections/day per user). | Free tier, no card |
+| 🔴 High | `UPSTASH_REDIS_REST_URL` / `TOKEN` | **Caps your Gemini spend.** Without it, nothing stops a bot or one enthusiastic user from hammering `/api/chat`, `/api/reports/generate`, or `/api/vision/analyze` in a loop — each call costs you real money. Now wired in with sane limits (30 chats/hr, 15 reports/day, 20 inspections/day per user). | Free tier, no card |
 | 🟡 Medium | `RESEND_API_KEY` | Sends a real welcome email on signup and a waitlist confirmation — makes the pilot feel like a real product, not a form that goes nowhere. | Free: 3,000 emails/mo |
 | 🟢 Already added, no key needed | Vercel Analytics + Speed Insights | Zero-config once deployed to Vercel — shows you real visitor counts and page performance without adding any env var. Useful for showing traction to prospective pilot partners. | Free tier |
 
@@ -156,7 +156,7 @@ This script runs the same lint + build checks locally before it lets Vercel see 
 code — it refuses to deploy a broken build.
 
 `vercel.json` pins functions to the `lhr1` (London) region, the closest Vercel region to
-Nigeria, and gives the three Claude-calling routes a 30-second max duration (the default
+Nigeria, and gives the three Gemini-calling routes a 30-second max duration (the default
 10s can be tight for report generation).
 
 ## 8. Deployment audit (what was cross-checked and fixed)
@@ -183,7 +183,7 @@ server hitting every API route — not just written and assumed correct. Fixed i
   neither benefits from the optimization pipeline).
 - **Verified every API route's error handling by hand**, hitting each with `curl`:
   `/api/chat` and `/api/reports/generate` return a clean `503` with a human-readable
-  message when `ANTHROPIC_API_KEY` is missing (not a crash/500), `/api/waitlist` returns
+  message when `GEMINI_API_KEY` is missing (not a crash/500), `/api/waitlist` returns
   `400` on a malformed email, and `/api/weather` catches upstream failures and returns
   `502` with the real error message instead of throwing.
 

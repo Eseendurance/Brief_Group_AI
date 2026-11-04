@@ -7,12 +7,12 @@ import { Zap, Cpu, LineChart, FileText, Eye, ShoppingBag, ArrowRight, CheckCircl
 import PulseGrid from '@/components/PulseGrid';
 
 const MODULES = [
-  { icon: Zap, title: 'Smart Energy I&V', phase: 'Phase 1 · Core', desc: 'Real-time energy visibility, usage verification, site benchmarking, and consumption alerts.', color: 'text-amber' },
-  { icon: Cpu, title: 'AI Fault Detection', phase: 'Phase 1 · Core', desc: 'A weighted risk model flags which machine, cable, or transformer is trending toward failure before it happens.', color: 'text-alert' },
-  { icon: LineChart, title: 'Energy Forecasting', phase: 'Phase 2 · Intelligence', desc: 'Live weather and usage patterns combine to predict demand and flag cost spikes before they arrive.', color: 'text-cyan' },
-  { icon: FileText, title: 'Automated Reports', phase: 'Phase 2 · Automation', desc: 'Boardroom-ready energy, farm, and inspection reports, generated from your real platform data.', color: 'text-emerald' },
-  { icon: Eye, title: 'Computer Vision Inspection', phase: 'Phase 3 · Vision', desc: 'Upload a photo of a panel or transformer and get an AI-assisted fault read, no site visit required.', color: 'text-cyan' },
-  { icon: ShoppingBag, title: 'Digital Marketplace', phase: 'Phase 3 · Marketplace', desc: 'A trusted buy-and-sell layer for energy equipment, parts, and maintenance providers. Coming soon.', color: 'text-amber' },
+  { icon: Zap, title: 'Smart Energy Intelligence', phase: 'Core', desc: 'Real-time energy visibility, usage verification, benchmarking, and live site anomaly alerts for power-heavy operations.', color: 'text-amber' },
+  { icon: Cpu, title: 'AI Fault Detection', phase: 'Core', desc: 'Weighted risk scoring identifies which asset or equipment cluster is trending toward failure before downtime hits.', color: 'text-alert' },
+  { icon: LineChart, title: 'AI Recommendations', phase: 'Optimization', desc: 'Operational action plans ranked by impact, cost, urgency, and maintenance priority for teams and leadership.', color: 'text-cyan' },
+  { icon: FileText, title: 'Automated Reports', phase: 'Automation', desc: 'Board-ready reports, compliance summaries, site health notes, and executive reviews generated from real data.', color: 'text-emerald' },
+  { icon: Eye, title: 'Computer Vision Inspection', phase: 'Vision', desc: 'Upload photos of transformers, panels, or machinery to get AI-assisted fault detection and visual risk summaries.', color: 'text-cyan' },
+  { icon: ShoppingBag, title: 'Marketplace & Procurement', phase: 'Growth', desc: 'Trusted vendor and equipment marketplace for parts, maintenance services, and operational sourcing.', color: 'text-amber' },
 ];
 
 const ROADMAP = [

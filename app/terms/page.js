@@ -27,7 +27,7 @@ export default function TermsPage() {
         <p className="mb-4">
           Brief Group provides software tools to monitor energy usage, flag equipment fault risk, assess farm
           conditions, and generate reports and inspections, some of which are powered by third-party AI
-          models (Anthropic's Claude). Outputs from AI features (reports, chat replies, image analysis) are
+          models (Google Gemini). Outputs from AI features (reports, chat replies, image analysis) are
           decision-support material, not a substitute for professional engineering, agronomic, or safety
           judgment. Do not rely on an AI fault-risk score alone before taking equipment out of service or
           declaring it safe — always verify with qualified personnel.

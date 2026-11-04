@@ -1,21 +1,13 @@
 import { NextResponse } from 'next/server';
-import Anthropic from '@anthropic-ai/sdk';
 import { verifyRequestUser, getAdminDb } from '@/lib/firebaseAdmin';
 import { FieldValue } from 'firebase-admin/firestore';
 import { checkRateLimit, rateLimitFailure } from '@/lib/rate-limit';
 import { requireActiveAccess } from '@/lib/subscription';
+import { generateGeminiText } from '@/lib/ai-provider';
 
 export const runtime = 'nodejs';
 
 export async function POST(request) {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) {
-    return NextResponse.json(
-      { error: 'Report generation is not configured yet. Add ANTHROPIC_API_KEY in your environment variables.' },
-      { status: 503 }
-    );
-  }
-
   const authResult = await verifyRequestUser(request);
   if (authResult.error) {
     return NextResponse.json({ error: authResult.error }, { status: authResult.status });
@@ -26,7 +18,7 @@ export async function POST(request) {
     return NextResponse.json({ error: access.error }, { status: access.status });
   }
 
-  // Report generation is a longer, more expensive Claude call — capped tighter than chat.
+  // Report generation is a longer, more expensive Gemini call — capped tighter than chat.
   const rate = await checkRateLimit('reports', authResult.uid, 15, '1 d');
   const rateFailure = rateLimitFailure(rate, `Daily report limit reached. Try again after ${rate.resetAt}.`);
   if (rateFailure) {
@@ -55,8 +47,6 @@ export async function POST(request) {
       return NextResponse.json({ error: 'The report data is too large. Reduce it and try again.' }, { status: 413 });
     }
 
-    const anthropic = new Anthropic({ apiKey });
-
     const prompt = `Write a professional, boardroom-ready ${reportType} report for "${siteName || 'the site'}".
 Use the real data below — do not invent numbers that aren't derivable from it. Structure it with:
 1. Executive Summary (2-3 sentences)
@@ -67,14 +57,16 @@ Use the real data below — do not invent numbers that aren't derivable from it.
 Data:
 ${JSON.stringify(data, null, 2)}`;
 
-    const response = await anthropic.messages.create({
-      model: 'claude-sonnet-4-6',
-      max_tokens: 1500,
-      messages: [{ role: 'user', content: prompt }],
+    const geminiResponse = await generateGeminiText({
+      systemPrompt: 'You are a professional operations and reporting assistant for industrial and infrastructure teams. Use the supplied data and keep the response actionable, accurate, and concise.',
+      userPrompt: prompt,
     });
 
-    const textBlock = response.content.find((b) => b.type === 'text');
-    const reportText = textBlock?.text || '';
+    if (!geminiResponse.ok) {
+      return NextResponse.json({ error: geminiResponse.error || 'Report generation failed' }, { status: 503 });
+    }
+
+    const reportText = geminiResponse.text || '';
 
     // Persist the generated report so it shows up in report history.
     const adminDb = getAdminDb();
