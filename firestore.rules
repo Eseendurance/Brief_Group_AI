@@ -3,9 +3,51 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Users can read/write only their own profile document.
+    function ownsUser(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+
+    function hasValidNewProfile() {
+      return request.resource.data.keys().hasOnly([
+          'name', 'email', 'company', 'workRole', 'role', 'plan', 'trialEndsAt', 'createdAt'
+        ])
+        && request.resource.data.keys().hasAll([
+          'name', 'email', 'role', 'plan', 'trialEndsAt', 'createdAt'
+        ])
+        && request.resource.data.name is string
+        && request.resource.data.name.size() <= 120
+        && request.resource.data.email is string
+        && request.resource.data.email.size() <= 254
+        && request.resource.data.email == request.auth.token.email
+        && request.resource.data.role == 'pilot-partner'
+        && request.resource.data.plan == 'trial'
+        && request.resource.data.trialEndsAt is timestamp
+        && request.resource.data.trialEndsAt > request.time - duration.value(5, 'm')
+        && request.resource.data.trialEndsAt <= request.time + duration.value(14, 'd') + duration.value(5, 'm')
+        && request.resource.data.createdAt == request.time
+        && (!('company' in request.resource.data)
+          || (request.resource.data.company is string && request.resource.data.company.size() <= 160))
+        && (!('workRole' in request.resource.data)
+          || request.resource.data.workRole in [
+            'Farm owner', 'Equipment operator', 'Operations manager', 'Enterprise lead'
+          ]);
+    }
+
+    // Clients can create a basic trial profile but cannot grant themselves a paid plan or role.
     match /users/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read: if ownsUser(userId);
+      allow create: if ownsUser(userId) && hasValidNewProfile();
+      allow update: if ownsUser(userId)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'company', 'workRole'])
+        && request.resource.data.name is string
+        && request.resource.data.name.size() <= 120
+        && (!('company' in request.resource.data)
+          || (request.resource.data.company is string && request.resource.data.company.size() <= 160))
+        && (!('workRole' in request.resource.data)
+          || request.resource.data.workRole in [
+            'Farm owner', 'Equipment operator', 'Operations manager', 'Enterprise lead'
+          ]);
+      allow delete: if false;
     }
 
     // Energy readings, fault readings, reports, inspections — every

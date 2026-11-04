@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getAdminDb } from '@/lib/firebaseAdmin';
 import { FieldValue } from 'firebase-admin/firestore';
-import { checkRateLimit, clientIp } from '@/lib/rate-limit';
+import { checkRateLimit, clientIp, rateLimitFailure } from '@/lib/rate-limit';
 import { sendWaitlistConfirmation } from '@/lib/email';
 
 // Captures real Digital Marketplace waitlist signups — Phase 3 module,
@@ -13,12 +13,26 @@ export async function POST(request) {
     // This form is public (no login required), so it's rate-limited by IP
     // instead of uid — stops a script from flooding your leads collection.
     const rate = await checkRateLimit('waitlist', clientIp(request), 5, '1 h');
-    if (rate.limited) {
-      return NextResponse.json({ error: 'Too many submissions. Please try again later.' }, { status: 429 });
+    const rateFailure = rateLimitFailure(rate, 'Too many submissions. Please try again later.');
+    if (rateFailure) {
+      return NextResponse.json({ error: rateFailure.error }, { status: rateFailure.status });
     }
 
-    const { email, company, interest } = await request.json();
-    if (!email || !/^\S+@\S+\.\S+$/.test(email)) {
+    const body = await request.json().catch(() => null);
+    if (!body || typeof body !== 'object' || Array.isArray(body)) {
+      return NextResponse.json({ error: 'A valid waitlist request is required.' }, { status: 400 });
+    }
+
+    const { email, company = '', interest = '' } = body;
+    if (
+      typeof email !== 'string' ||
+      typeof company !== 'string' ||
+      typeof interest !== 'string' ||
+      email.trim().length > 254 ||
+      company.trim().length > 160 ||
+      interest.trim().length > 1000 ||
+      !/^\S+@\S+\.\S+$/.test(email.trim())
+    ) {
       return NextResponse.json({ error: 'A valid email is required' }, { status: 400 });
     }
 
@@ -28,17 +42,19 @@ export async function POST(request) {
     }
 
     await adminDb.collection('marketplace_waitlist').add({
-      email,
-      company: company || '',
-      interest: interest || '',
+      email: email.trim().toLowerCase(),
+      company: company.trim(),
+      interest: interest.trim(),
       createdAt: FieldValue.serverTimestamp(),
     });
 
     // Best-effort — a failed email should never block the signup itself.
-    sendWaitlistConfirmation({ to: email }).catch((err) => console.error('waitlist email failed', err));
+    sendWaitlistConfirmation({ to: email.trim().toLowerCase() })
+      .catch((err) => console.error('waitlist email failed', err));
 
     return NextResponse.json({ success: true });
   } catch (err) {
-    return NextResponse.json({ error: err.message || 'Failed to join waitlist' }, { status: 500 });
+    console.error('waitlist route error', err);
+    return NextResponse.json({ error: 'Failed to join the waitlist. Please try again.' }, { status: 500 });
   }
 }

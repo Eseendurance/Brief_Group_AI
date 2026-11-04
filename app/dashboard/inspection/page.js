@@ -45,14 +45,21 @@ export default function InspectionPage() {
   function handleFileChange(e) {
     const f = e.target.files?.[0];
     if (!f) return;
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(f.type) || f.size > 3 * 1024 * 1024) {
+      setFile(null);
+      setPreview(null);
+      setError('Choose a JPEG, PNG, or WebP image smaller than 3 MB.');
+      return;
+    }
     setFile(f);
     setPreview(URL.createObjectURL(f));
+    setError('');
     setResult(null);
   }
 
   async function handleAnalyze(e) {
     e.preventDefault();
-    if (!file || !assetLabel) return;
+    if (!file || !assetLabel.trim()) return;
     setUploading(true);
     setError('');
     try {
@@ -65,7 +72,7 @@ export default function InspectionPage() {
       const imageBase64 = await fileToBase64(file);
       const data = await authedFetch('/api/vision/analyze', {
         method: 'POST',
-        body: JSON.stringify({ imageBase64, mediaType: file.type, assetLabel, imageUrl }),
+        body: JSON.stringify({ imageBase64, mediaType: file.type, assetLabel: assetLabel.trim(), imageUrl }),
       });
       setResult(data.analysis);
     } catch (err) {
@@ -86,11 +93,11 @@ export default function InspectionPage() {
         <div className="grid sm:grid-cols-2 gap-6">
           <div>
             <label className="text-xs text-ink-500 mb-1 block">Asset label</label>
-            <input required value={assetLabel} onChange={(e) => setAssetLabel(e.target.value)}
+            <input required maxLength={120} value={assetLabel} onChange={(e) => setAssetLabel(e.target.value)}
               className="w-full bg-base-800 border border-border rounded-lg px-3 py-2 text-sm focus:border-amber outline-none mb-4" placeholder="e.g. Panel B — East Wing" />
 
             <label className="flex flex-col items-center justify-center gap-2 border-2 border-dashed border-border rounded-xl h-40 cursor-pointer hover:border-cyan/50 transition-colors">
-              <input type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
+            <input type="file" accept="image/jpeg,image/png,image/webp" onChange={handleFileChange} className="hidden" />
               {preview ? (
                 <img src={preview} alt="Preview" className="h-full w-full object-cover rounded-xl" />
               ) : (

@@ -13,7 +13,7 @@ import GoogleIcon from '@/components/GoogleIcon';
 export default function SignupPage() {
   const { signUp, logInWithGoogle, configured } = useAuth();
   const router = useRouter();
-  const [form, setForm] = useState({ name: '', company: '', email: '', password: '' });
+  const [form, setForm] = useState({ name: '', company: '', workRole: '', email: '', password: '' });
   const [agreed, setAgreed] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -33,10 +33,14 @@ export default function SignupPage() {
       setError('Password must be at least 6 characters.');
       return;
     }
+    if (!form.workRole) {
+      setError('Choose the role that best describes your work.');
+      return;
+    }
     setLoading(true);
     try {
-      await signUp(form.name, form.email, form.password, form.company);
-      authedFetch('/api/notify/welcome', { method: 'POST', body: JSON.stringify({ name: form.name }) })
+      await signUp(form.name.trim(), form.email.trim().toLowerCase(), form.password, form.company.trim(), form.workRole);
+      authedFetch('/api/notify/welcome', { method: 'POST', body: JSON.stringify({ name: form.name.trim() }) })
         .catch((err) => console.error('welcome email failed', err)); // best-effort, never blocks navigation
       router.push('/dashboard');
     } catch (err) {
@@ -52,9 +56,13 @@ export default function SignupPage() {
       setError('Please agree to the Terms of Service and Privacy Policy to continue.');
       return;
     }
+    if (!form.workRole) {
+      setError('Choose the role that best describes your work.');
+      return;
+    }
     setLoading(true);
     try {
-      await logInWithGoogle();
+      await logInWithGoogle({ company: form.company.trim(), workRole: form.workRole });
       router.push('/dashboard');
     } catch (err) {
       setError(mapAuthError(err));
@@ -73,7 +81,7 @@ export default function SignupPage() {
 
         <div className="card p-8 shadow-card">
           <h1 className="font-display font-semibold text-2xl mb-1">Join the pilot</h1>
-          <p className="text-ink-300 text-sm mb-6">Create your account and launch the dashboard.</p>
+          <p className="text-ink-300 text-sm mb-6">A few details help us make Brief Group useful for your team.</p>
 
           {!configured && (
             <div className="flex items-start gap-2 bg-alert/10 border border-alert/30 text-alert text-xs rounded-lg p-3 mb-5">
@@ -90,23 +98,34 @@ export default function SignupPage() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="text-sm text-ink-300 mb-1.5 block">Full name</label>
-              <input required value={form.name} onChange={(e) => update('name', e.target.value)}
+              <label htmlFor="name" className="text-sm text-ink-300 mb-1.5 block">Full name</label>
+              <input id="name" name="name" autoComplete="name" required maxLength={120} value={form.name} onChange={(e) => update('name', e.target.value)}
                 className="w-full bg-base-800 border border-border rounded-lg px-3.5 py-2.5 text-sm focus:border-amber outline-none transition-colors" placeholder="Ada Obi" />
             </div>
             <div>
-              <label className="text-sm text-ink-300 mb-1.5 block">Company</label>
-              <input value={form.company} onChange={(e) => update('company', e.target.value)}
+              <label htmlFor="workRole" className="text-sm text-ink-300 mb-1.5 block">What best describes your role?</label>
+              <select id="workRole" name="workRole" required value={form.workRole} onChange={(e) => update('workRole', e.target.value)}
+                className="w-full bg-base-800 border border-border rounded-lg px-3.5 py-2.5 text-sm focus:border-amber outline-none transition-colors">
+                <option value="" disabled>Choose your role</option>
+                <option value="Farm owner">Farm owner</option>
+                <option value="Equipment operator">Equipment operator</option>
+                <option value="Operations manager">Operations manager</option>
+                <option value="Enterprise lead">Enterprise lead</option>
+              </select>
+            </div>
+            <div>
+              <label htmlFor="company" className="text-sm text-ink-300 mb-1.5 block">Company or team</label>
+              <input id="company" name="company" autoComplete="organization" maxLength={160} value={form.company} onChange={(e) => update('company', e.target.value)}
                 className="w-full bg-base-800 border border-border rounded-lg px-3.5 py-2.5 text-sm focus:border-amber outline-none transition-colors" placeholder="Your organization" />
             </div>
             <div>
-              <label className="text-sm text-ink-300 mb-1.5 block">Email</label>
-              <input type="email" required value={form.email} onChange={(e) => update('email', e.target.value)}
+              <label htmlFor="email" className="text-sm text-ink-300 mb-1.5 block">Email</label>
+              <input id="email" name="email" type="email" autoComplete="email" required maxLength={254} value={form.email} onChange={(e) => update('email', e.target.value)}
                 className="w-full bg-base-800 border border-border rounded-lg px-3.5 py-2.5 text-sm focus:border-amber outline-none transition-colors" placeholder="you@company.com" />
             </div>
             <div>
-              <label className="text-sm text-ink-300 mb-1.5 block">Password</label>
-              <input type="password" required value={form.password} onChange={(e) => update('password', e.target.value)}
+              <label htmlFor="password" className="text-sm text-ink-300 mb-1.5 block">Password</label>
+              <input id="password" name="password" type="password" autoComplete="new-password" required minLength={6} value={form.password} onChange={(e) => update('password', e.target.value)}
                 className="w-full bg-base-800 border border-border rounded-lg px-3.5 py-2.5 text-sm focus:border-amber outline-none transition-colors" placeholder="At least 6 characters" />
             </div>
             <label className="flex items-start gap-2.5 text-xs text-ink-300 pt-1">
@@ -156,7 +175,10 @@ function mapAuthError(err) {
   if (code.includes('email-already-in-use')) return 'An account with this email already exists.';
   if (code.includes('weak-password')) return 'Password is too weak.';
   if (code.includes('invalid-email')) return 'That email address looks invalid.';
+  if (code.includes('operation-not-allowed')) return 'Email and password sign-up is not enabled yet. Please contact the Brief Group team.';
+  if (code.includes('network-request-failed')) return 'We could not reach the sign-in service. Check your connection and try again.';
+  if (code.includes('permission-denied')) return 'Your account was created, but we could not finish setting up its profile. Please sign in again or contact support.';
   if (code.includes('popup-blocked')) return 'Your browser blocked the sign-in popup. Allow popups for this site and try again.';
   if (code.includes('unauthorized-domain')) return "This domain isn't authorized for sign-in yet — add it under Firebase Console → Authentication → Settings → Authorized domains.";
-  return err?.message || 'Something went wrong. Please try again.';
+  return 'We could not create your account. Please try again.';
 }

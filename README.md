@@ -219,17 +219,21 @@ will pick it up.
   is broken in production": a blocked popup, and — the more likely culprit for
   Omnicore AI — the deployed domain not being added under **Firebase Console →
   Authentication → Settings → Authorized domains**.
+- **Team-aware registration** collects a work role from the roles shown on the public
+  site. The profile rules limit client-created data to a 14-day trial and keep billing
+  status and access roles out of user-controlled updates.
 - **Terms of Service and Privacy Policy** at `/terms` and `/privacy` — real content
   describing what this app actually collects and does (not lorem ipsum), with a required
   checkbox on signup (blocks both email and Google signup until checked). Both pages say
   plainly that they haven't been reviewed by a lawyer yet — get that done before real
   paying customers.
-- **14-day trial, enforced server-side.** Every new account gets `plan: 'trial'` and
-  `trialEndsAt` (now + 14 days) written to Firestore at signup. `lib/subscription.js` is
-  the single source of truth: `components/TrialBanner.jsx` reads it to show a banner in
-  the last 5 days of the trial, and `/api/chat`, `/api/reports/generate`, and
-  `/api/vision/analyze` all check it server-side and return `402` once expired — so this
-  is a real restriction, not just a UI banner someone could ignore.
+- **14-day trial, enforced server-side.** New accounts get a bounded `trial` profile in
+  Firestore. Security rules prevent users from changing their plan, role, or trial end
+  date; AI routes reject missing/invalid profiles and check access on the server.
+  `components/TrialBanner.jsx` reads the same trial state for the UI.
+- **Production rate limits fail closed.** Configure Upstash Redis before enabling AI,
+  contact, or waitlist endpoints in production. Local development remains usable without
+  Redis; production requests return `503` until the limiter is configured.
 - **Real Stripe + Paystack checkout**, with webhooks that actually upgrade the user's
   plan in Firestore on successful payment (`/api/webhooks/stripe`,
   `/api/webhooks/paystack`) — see `.env.local.example` for exact setup steps for both,

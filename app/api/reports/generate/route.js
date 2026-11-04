@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
 import { verifyRequestUser, getAdminDb } from '@/lib/firebaseAdmin';
 import { FieldValue } from 'firebase-admin/firestore';
-import { checkRateLimit } from '@/lib/rate-limit';
+import { checkRateLimit, rateLimitFailure } from '@/lib/rate-limit';
 import { requireActiveAccess } from '@/lib/subscription';
 
 export const runtime = 'nodejs';
@@ -23,23 +23,36 @@ export async function POST(request) {
 
   const access = await requireActiveAccess(getAdminDb(), authResult.uid);
   if (!access.allowed) {
-    return NextResponse.json({ error: access.error }, { status: 402 });
+    return NextResponse.json({ error: access.error }, { status: access.status });
   }
 
   // Report generation is a longer, more expensive Claude call — capped tighter than chat.
   const rate = await checkRateLimit('reports', authResult.uid, 15, '1 d');
-  if (rate.limited) {
-    return NextResponse.json(
-      { error: `Daily report limit reached. Try again after ${rate.resetAt}.` },
-      { status: 429 }
-    );
+  const rateFailure = rateLimitFailure(rate, `Daily report limit reached. Try again after ${rate.resetAt}.`);
+  if (rateFailure) {
+    return NextResponse.json({ error: rateFailure.error }, { status: rateFailure.status });
   }
 
   try {
-    const body = await request.json();
+    const body = await request.json().catch(() => null);
+    if (!body || typeof body !== 'object' || Array.isArray(body)) {
+      return NextResponse.json({ error: 'A valid report request is required.' }, { status: 400 });
+    }
+
     const { reportType, data, siteName } = body;
-    if (!reportType || !data) {
-      return NextResponse.json({ error: 'reportType and data are required' }, { status: 400 });
+    if (
+      typeof reportType !== 'string' ||
+      !reportType.trim() ||
+      reportType.length > 80 ||
+      !data ||
+      typeof data !== 'object' ||
+      Array.isArray(data) ||
+      (siteName !== undefined && (typeof siteName !== 'string' || siteName.length > 120))
+    ) {
+      return NextResponse.json({ error: 'A report type and object data are required.' }, { status: 400 });
+    }
+    if (JSON.stringify(data).length > 20000) {
+      return NextResponse.json({ error: 'The report data is too large. Reduce it and try again.' }, { status: 413 });
     }
 
     const anthropic = new Anthropic({ apiKey });

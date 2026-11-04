@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
 import { verifyRequestUser, getAdminDb } from '@/lib/firebaseAdmin';
-import { checkRateLimit, clientIp } from '@/lib/rate-limit';
+import { checkRateLimit, clientIp, rateLimitFailure } from '@/lib/rate-limit';
 import { requireActiveAccess } from '@/lib/subscription';
 
 export const runtime = 'nodejs';
@@ -36,22 +36,41 @@ export async function POST(request) {
   if (auth.uid) {
     const access = await requireActiveAccess(getAdminDb(), auth.uid);
     if (!access.allowed) {
-      return NextResponse.json({ error: access.error }, { status: 402 });
+      return NextResponse.json({ error: access.error }, { status: access.status });
     }
   }
 
   const rate = await checkRateLimit('chat', identifier, 30, '1 h');
-  if (rate.limited) {
-    return NextResponse.json(
-      { error: `Rate limit reached. Try again after ${rate.resetAt}.` },
-      { status: 429 }
-    );
+  const rateFailure = rateLimitFailure(rate, `Rate limit reached. Try again after ${rate.resetAt}.`);
+  if (rateFailure) {
+    return NextResponse.json({ error: rateFailure.error }, { status: rateFailure.status });
   }
 
   try {
-    const { messages, context } = await request.json();
-    if (!Array.isArray(messages) || messages.length === 0) {
-      return NextResponse.json({ error: 'messages array is required' }, { status: 400 });
+    const body = await request.json().catch(() => null);
+    if (!body || typeof body !== 'object' || Array.isArray(body)) {
+      return NextResponse.json({ error: 'A valid chat request is required.' }, { status: 400 });
+    }
+
+    const { messages, context } = body;
+    if (!Array.isArray(messages) || messages.length === 0 || messages.length > 20) {
+      return NextResponse.json({ error: 'messages must contain between 1 and 20 items' }, { status: 400 });
+    }
+    if (messages.some((message) =>
+      !message ||
+      typeof message !== 'object' ||
+      !['user', 'assistant'].includes(message.role) ||
+      typeof message.content !== 'string' ||
+      !message.content.trim() ||
+      message.content.length > 6000
+    )) {
+      return NextResponse.json({ error: 'Each message must have a valid role and non-empty text content under 6,000 characters.' }, { status: 400 });
+    }
+
+    const contextSize = context === undefined ? 0 : JSON.stringify(context).length;
+    const messageSize = messages.reduce((total, message) => total + message.content.length, 0);
+    if (messageSize + contextSize > 30000 || contextSize > 10000) {
+      return NextResponse.json({ error: 'The conversation is too large. Shorten it and try again.' }, { status: 413 });
     }
 
     const anthropic = new Anthropic({ apiKey });
