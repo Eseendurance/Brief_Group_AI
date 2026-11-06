@@ -5,11 +5,17 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, Loader2 } from 'lucide-react';
 import { sendPasswordResetEmail } from 'firebase/auth';
+import { z } from 'zod';
 import { useAuth } from '@/lib/auth-context';
 import { auth } from '@/lib/firebase';
 import GoogleIcon from '@/components/GoogleIcon';
+
+const credentialsSchema = z.object({
+  email: z.string().trim().email('Enter a valid email address.').max(254),
+  password: z.string().min(6, 'Password must be at least 6 characters.'),
+});
 
 export default function LoginPage() {
   const { logIn, logInWithGoogle, configured } = useAuth();
@@ -24,11 +30,40 @@ export default function LoginPage() {
     e.preventDefault();
     setError('');
     setNotice('');
+
+    const credentials = credentialsSchema.safeParse({ email, password });
+    if (!credentials.success) {
+      setError(credentials.error.issues[0]?.message || 'Check your email and password.');
+      return;
+    }
+
     setLoading(true);
+    let authenticationStarted = false;
     try {
-      await logIn(email.trim().toLowerCase(), password);
+      const preflight = await fetch('/api/auth/login-attempt', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'check', email: credentials.data.email }),
+      });
+      const preflightData = await preflight.json().catch(() => ({}));
+      if (!preflight.ok) {
+        const error = new Error(preflightData.error || 'Sign-in protection is unavailable.');
+        error.status = preflight.status;
+        throw error;
+      }
+
+      authenticationStarted = true;
+      await logIn(credentials.data.email, credentials.data.password);
+      recordLoginAttempt('succeeded', credentials.data.email)
+        .catch((auditError) => console.error('[AUTH_LOGIN_AUDIT_ERROR]', auditError?.stack || auditError));
       router.push(getNextPath());
     } catch (err) {
+      console.error('[AUTH_LOGIN_ERROR]', err?.stack || err);
+      if (authenticationStarted) {
+        recordLoginAttempt('failed', credentials.data.email)
+          .catch((auditError) => console.error('[AUTH_LOGIN_AUDIT_ERROR]', auditError?.stack || auditError));
+      }
       setError(mapAuthError(err));
     } finally {
       setLoading(false);
@@ -43,13 +78,23 @@ export default function LoginPage() {
       setError('Enter your email address first, and we will send a reset link.');
       return;
     }
+    const emailCheck = z.string().trim().email().max(254).safeParse(normalizedEmail);
+    if (!emailCheck.success) {
+      setError('Enter a valid email address to receive a reset link.');
+      return;
+    }
 
     setLoading(true);
     try {
       await sendPasswordResetEmail(auth, normalizedEmail);
-      setNotice('If an account exists for this email, a password reset link has been sent.');
+      setNotice('If an account exists for this email, we sent a secure, one-time password reset link.');
     } catch (err) {
-      setError(mapAuthError(err));
+      console.error('[AUTH_PASSWORD_RESET_ERROR]', err?.stack || err);
+      if (err?.code === 'auth/user-not-found') {
+        setNotice('If an account exists for this email, we sent a secure, one-time password reset link.');
+      } else {
+        setError(mapAuthError(err));
+      }
     } finally {
       setLoading(false);
     }
@@ -63,6 +108,7 @@ export default function LoginPage() {
       await logInWithGoogle();
       router.push(getNextPath());
     } catch (err) {
+      console.error('[AUTH_GOOGLE_LOGIN_ERROR]', err?.stack || err);
       setError(mapAuthError(err));
     } finally {
       setLoading(false);
@@ -89,7 +135,7 @@ export default function LoginPage() {
           )}
 
           {error && (
-            <div className="flex items-start gap-2 bg-alert/10 border border-alert/30 text-alert text-xs rounded-lg p-3 mb-5">
+            <div role="alert" className="flex items-start gap-2 bg-alert/10 border border-alert/30 text-alert text-xs rounded-lg p-3 mb-5">
               <AlertCircle size={16} className="shrink-0 mt-0.5" />
               <span>{error}</span>
             </div>
@@ -108,7 +154,12 @@ export default function LoginPage() {
                 required
                 maxLength={254}
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                aria-invalid={Boolean(error)}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  setError('');
+                  setNotice('');
+                }}
                 className="w-full bg-base-800 border border-border rounded-lg px-3.5 py-2.5 text-sm focus:border-amber outline-none transition-colors"
                 placeholder="you@company.com"
               />
@@ -121,8 +172,14 @@ export default function LoginPage() {
                 type="password"
                 autoComplete="current-password"
                 required
+                minLength={6}
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                aria-invalid={Boolean(error)}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  setError('');
+                  setNotice('');
+                }}
                 className="w-full bg-base-800 border border-border rounded-lg px-3.5 py-2.5 text-sm focus:border-amber outline-none transition-colors"
                 placeholder="••••••••"
               />
@@ -132,7 +189,7 @@ export default function LoginPage() {
                 disabled={loading || !configured}
                 className="mt-2 text-xs text-amber hover:text-amber-soft disabled:opacity-50"
               >
-                Forgot your password?
+                {loading ? 'Sending reset link…' : 'Send a secure reset link'}
               </button>
             </div>
             <button
@@ -140,7 +197,7 @@ export default function LoginPage() {
               disabled={loading || !configured}
               className="w-full bg-amber text-base-900 font-medium py-2.5 rounded-lg hover:bg-amber-soft transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? 'Logging in…' : 'Log in'}
+              {loading ? <><Loader2 className="inline mr-2 animate-spin" size={16} />Signing you in…</> : 'Sign in'}
             </button>
           </form>
 
@@ -178,6 +235,19 @@ export default function LoginPage() {
   );
 }
 
+async function recordLoginAttempt(action, email) {
+  const response = await fetch('/api/auth/login-attempt', {
+    method: 'POST',
+    credentials: 'same-origin',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action, email }),
+  });
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}));
+    throw new Error(data.error || 'Login audit could not be recorded.');
+  }
+}
+
 function getNextPath() {
   if (typeof window === 'undefined') return '/dashboard';
   const nextPath = new URLSearchParams(window.location.search).get('next');
@@ -188,11 +258,17 @@ function getNextPath() {
 
 function mapAuthError(err) {
   const code = err?.code || '';
-  if (code.includes('user-not-found') || code.includes('wrong-password') || code.includes('invalid-credential')) {
-    return 'Incorrect email or password.';
+  if (code.includes('user-not-found') || code.includes('wrong-password') || code.includes('invalid-credential') ||
+      code.includes('invalid-login-credentials') || err?.status === 401) {
+    return 'Invalid email or password.';
   }
-  if (code.includes('too-many-requests')) return 'Too many attempts. Try again shortly.';
+  if (code.includes('too-many-requests') || err?.status === 429) return 'Too many attempts. Please wait a minute and try again.';
+  if (err?.status === 503) return err.message || 'Sign-in protection is temporarily unavailable. Please try again shortly.';
+  if (code.toLowerCase().includes('auth_not_configured') || code.includes('session-unavailable')) {
+    return 'Secure sign-in is not ready yet. Please contact the Brief Group team.';
+  }
   if (code.includes('operation-not-allowed')) return 'Email and password sign-in is not enabled yet. Please contact the Brief Group team.';
+  if (code.includes('invalid-api-key')) return 'Sign-in is temporarily unavailable. Please contact the Brief Group team.';
   if (code.includes('network-request-failed')) return 'We could not reach the sign-in service. Check your connection and try again.';
   if (code.includes('popup-closed-by-user')) return 'Sign-in was cancelled.';
   if (code.includes('popup-blocked')) return 'Your browser blocked the sign-in popup. Allow popups for this site and try again.';

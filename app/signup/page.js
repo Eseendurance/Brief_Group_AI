@@ -5,10 +5,17 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, Loader2 } from 'lucide-react';
+import { z } from 'zod';
 import { useAuth } from '@/lib/auth-context';
 import { authedFetch } from '@/lib/api-client';
 import GoogleIcon from '@/components/GoogleIcon';
+
+const signupSchema = z.object({
+  name: z.string().trim().min(1, 'Enter your name.').max(120),
+  email: z.string().trim().email('Enter a valid email address.').max(254),
+  password: z.string().min(6, 'Password must be at least 6 characters.'),
+});
 
 export default function SignupPage() {
   const { signUp, logInWithGoogle, configured } = useAuth();
@@ -20,17 +27,19 @@ export default function SignupPage() {
 
   function update(field, value) {
     setForm((f) => ({ ...f, [field]: value }));
+    setError('');
   }
 
   async function handleSubmit(e) {
     e.preventDefault();
     setError('');
-    if (!agreed) {
-      setError('Please agree to the Terms of Service and Privacy Policy to continue.');
+    const validation = signupSchema.safeParse(form);
+    if (!validation.success) {
+      setError(validation.error.issues[0]?.message || 'Check your details and try again.');
       return;
     }
-    if (form.password.length < 6) {
-      setError('Password must be at least 6 characters.');
+    if (!agreed) {
+      setError('Please agree to the Terms of Service and Privacy Policy to continue.');
       return;
     }
     if (!form.workRole) {
@@ -90,7 +99,7 @@ export default function SignupPage() {
             </div>
           )}
           {error && (
-            <div className="flex items-start gap-2 bg-alert/10 border border-alert/30 text-alert text-xs rounded-lg p-3 mb-5">
+            <div role="alert" className="flex items-start gap-2 bg-alert/10 border border-alert/30 text-alert text-xs rounded-lg p-3 mb-5">
               <AlertCircle size={16} className="shrink-0 mt-0.5" />
               <span>{error}</span>
             </div>
@@ -132,7 +141,10 @@ export default function SignupPage() {
               <input
                 type="checkbox"
                 checked={agreed}
-                onChange={(e) => setAgreed(e.target.checked)}
+                onChange={(e) => {
+                  setAgreed(e.target.checked);
+                  setError('');
+                }}
                 className="mt-0.5 h-4 w-4 rounded border-border accent-amber shrink-0"
               />
               <span>
@@ -144,7 +156,7 @@ export default function SignupPage() {
             </label>
             <button type="submit" disabled={loading || !configured}
               className="w-full bg-amber text-base-900 font-medium py-2.5 rounded-lg hover:bg-amber-soft transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
-              {loading ? 'Creating account…' : 'Create account'}
+              {loading ? <><Loader2 className="inline mr-2 animate-spin" size={16} />Creating your secure account…</> : 'Create account'}
             </button>
           </form>
 
@@ -194,7 +206,9 @@ function mapAuthError(err) {
   if (code.includes('invalid-email')) return 'That email address looks invalid.';
   if (code.includes('operation-not-allowed')) return 'Email and password sign-up is not enabled yet. Please contact the Brief Group team.';
   if (code.includes('network-request-failed')) return 'We could not reach the sign-in service. Check your connection and try again.';
-  if (code.includes('permission-denied')) return 'Your account was created, but we could not finish setting up its profile. Please sign in again or contact support.';
+  if (code.includes('permission-denied')) return 'Your sign-in was created, but profile setup could not finish. Try signing in again to complete setup, or contact support.';
+  if (code.toLowerCase().includes('auth_not_configured') || code.includes('session-unavailable')) return 'Secure sign-in is not ready yet. Please contact the Brief Group team.';
+  if (code.includes('too-many-requests')) return 'Too many account attempts. Please wait a moment and try again.';
   if (code.includes('popup-blocked')) return 'Your browser blocked the sign-in popup. Allow popups for this site and try again.';
   if (code.includes('unauthorized-domain')) return "This domain isn't authorized for sign-in yet — add it under Firebase Console → Authentication → Settings → Authorized domains.";
   return 'We could not create your account. Please try again.';

@@ -48,8 +48,13 @@ for previews and never add secrets to `NEXT_PUBLIC_*`.
 - `FIREBASE_ADMIN_PRIVATE_KEY` (store the service-account key as a protected secret)
 - `SITE_BASE` (canonical HTTPS URL used for invitation and payment return links)
 
-In Firebase Authentication, enable the sign-in methods the app offers and add every
-production, preview, and local host used for sign-in to Authorized domains. Create
+Firebase Admin credentials are required for server-issued HttpOnly session cookies and
+protected API access. If any Admin value is missing, sign-in fails closed with a clear
+configuration response rather than leaving the browser with a half-authenticated session.
+In Firebase Authentication, enable Email/Password and Google sign-in, configure the
+password-reset email template, and add every production, preview, and local host used for
+sign-in to Authorized domains. Firebase sends a one-time reset link with a protected
+action code; the app deliberately does not collect or store a reset code itself. Create
 Firestore and Storage, then deploy the repository rules:
 
 ```powershell
@@ -74,9 +79,12 @@ intentionally not readable or writable from client SDKs.
 - `UPSTASH_REDIS_REST_URL`
 - `UPSTASH_REDIS_REST_TOKEN`
 
-Production AI endpoints fail closed when rate limiting is not configured. Confirm the
-Gemini project has the required quota and that prompts/images sent to the provider are
-covered by your customer privacy notice and provider terms.
+Production AI and login endpoints fail closed when rate limiting is not configured.
+Login attempts are limited to five per minute per IP and normalized email; failed and
+successful attempt audit events include timestamp, IP, user agent, and a one-way email
+digest in server logs. Confirm the Gemini project has the required quota and that
+prompts/images sent to the provider are covered by your customer privacy notice and
+provider terms.
 
 ### Stripe
 
@@ -128,6 +136,10 @@ delivery of company invitations is not wired into the invitation endpoint yet.
 - Confirm CI passes `npm ci`, `npm run lint`, and `npm run build` on the intended commit.
 - Deploy to a Preview environment first, with separate Firebase and payment test projects.
 - Verify signup, login, password reset, company onboarding, and Google sign-in.
+- Confirm login responses set an HttpOnly, SameSite=Lax session cookie (Secure in
+  production), the cookie clears on sign-out, and protected APIs work without an
+  Authorization bearer header. Confirm existing Firebase users with a missing profile
+  can sign in and have a trial profile restored without changing an existing plan.
 - Create an owner workspace; invite a different email; accept the link with that email;
   verify wrong-email, expired, reused, and already-member cases fail.
 - Confirm owners/admins can manage company details, managers can invite only members and
