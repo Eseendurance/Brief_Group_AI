@@ -201,6 +201,7 @@ function getNextPath() {
 
 function mapAuthError(err) {
   const code = err?.code || '';
+  if (err?.status === 503) return err.message || 'Account services are temporarily unavailable. Please try again shortly.';
   if (code.includes('email-already-in-use')) return 'An account with this email already exists.';
   if (code.includes('weak-password')) return 'Password is too weak.';
   if (code.includes('invalid-email')) return 'That email address looks invalid.';

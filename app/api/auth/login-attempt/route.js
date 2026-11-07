@@ -50,10 +50,17 @@ export async function POST(request) {
     const userAgent = (request.headers.get('user-agent') || 'unknown').slice(0, 512);
 
     if (parsed.data.action === 'check') {
-      const [ipLimit, emailLimit] = await Promise.all([
-        checkRateLimit('auth-login-ip', ip, 5, '1 m'),
-        checkRateLimit('auth-login-email', emailDigest, 5, '1 m'),
-      ]);
+      let limits;
+      try {
+        limits = await Promise.all([
+          checkRateLimit('auth-login-ip', ip, 5, '1 m'),
+          checkRateLimit('auth-login-email', emailDigest, 5, '1 m'),
+        ]);
+      } catch (error) {
+        console.error('[AUTH_RATE_LIMIT_ERROR]', error?.stack || error);
+        return serviceUnavailable();
+      }
+      const [ipLimit, emailLimit] = limits;
       if ((!ipLimit.configured || !emailLimit.configured) && process.env.NODE_ENV === 'production') {
         return serviceUnavailable();
       }
@@ -69,6 +76,9 @@ export async function POST(request) {
     if (parsed.data.action === 'succeeded') {
       const auth = await verifyRequestUser(request);
       if (auth.error) return NextResponse.json({ error: auth.error, code: 'UNAUTHENTICATED' }, { status: auth.status });
+      if (auth.email?.trim().toLowerCase() !== parsed.data.email) {
+        return NextResponse.json({ error: 'The sign-in audit could not be verified.', code: 'AUDIT_IDENTITY_MISMATCH' }, { status: 403 });
+      }
     }
 
     const event = {

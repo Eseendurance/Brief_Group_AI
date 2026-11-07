@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { AlertCircle, Loader2 } from 'lucide-react';
+import { AlertCircle, Eye, EyeOff, Loader2 } from 'lucide-react';
 import { sendPasswordResetEmail } from 'firebase/auth';
 import { z } from 'zod';
 import { useAuth } from '@/lib/auth-context';
@@ -23,17 +23,22 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [fieldErrors, setFieldErrors] = useState({});
   const [notice, setNotice] = useState('');
   const [loading, setLoading] = useState(false);
+  const [resetLoading, setResetLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   async function handleSubmit(e) {
     e.preventDefault();
     setError('');
+    setFieldErrors({});
     setNotice('');
 
     const credentials = credentialsSchema.safeParse({ email, password });
     if (!credentials.success) {
-      setError(credentials.error.issues[0]?.message || 'Check your email and password.');
+      const issue = credentials.error.issues[0];
+      setFieldErrors({ [issue.path[0]]: issue.message });
       return;
     }
 
@@ -84,19 +89,19 @@ export default function LoginPage() {
       return;
     }
 
-    setLoading(true);
+    setResetLoading(true);
     try {
       await sendPasswordResetEmail(auth, normalizedEmail);
-      setNotice('If an account exists for this email, we sent a secure, one-time password reset link.');
+      setNotice('If an account exists for this email, check your inbox for a one-time reset link with a secure code.');
     } catch (err) {
       console.error('[AUTH_PASSWORD_RESET_ERROR]', err?.stack || err);
       if (err?.code === 'auth/user-not-found') {
-        setNotice('If an account exists for this email, we sent a secure, one-time password reset link.');
+        setNotice('If an account exists for this email, check your inbox for a one-time reset link with a secure code.');
       } else {
         setError(mapAuthError(err));
       }
     } finally {
-      setLoading(false);
+      setResetLoading(false);
     }
   }
 
@@ -125,7 +130,7 @@ export default function LoginPage() {
 
         <div className="card p-8 shadow-card">
           <h1 className="font-display font-semibold text-2xl mb-1">Welcome back</h1>
-          <p className="text-ink-300 text-sm mb-6">Sign in to pick up where your team left off.</p>
+          <p className="text-ink-300 text-sm mb-6">Good to see you again. Your Brief Group workspace is ready when you are.</p>
 
           {!configured && (
             <div className="flex items-start gap-2 bg-alert/10 border border-alert/30 text-alert text-xs rounded-lg p-3 mb-5">
@@ -141,7 +146,7 @@ export default function LoginPage() {
             </div>
           )}
 
-          {notice && <p role="status" className="text-sm text-ink-300 mb-5">{notice}</p>}
+          {notice && <p role="status" aria-live="polite" className="text-sm text-ink-300 mb-5">{notice}</p>}
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
@@ -154,47 +159,64 @@ export default function LoginPage() {
                 required
                 maxLength={254}
                 value={email}
-                aria-invalid={Boolean(error)}
+                aria-invalid={Boolean(fieldErrors.email)}
+                aria-describedby={fieldErrors.email ? 'email-error' : undefined}
                 onChange={(e) => {
                   setEmail(e.target.value);
                   setError('');
+                  setFieldErrors((current) => ({ ...current, email: '' }));
                   setNotice('');
                 }}
                 className="w-full bg-base-800 border border-border rounded-lg px-3.5 py-2.5 text-sm focus:border-amber outline-none transition-colors"
                 placeholder="you@company.com"
               />
+              {fieldErrors.email && <p id="email-error" className="mt-1 text-xs text-alert">{fieldErrors.email}</p>}
             </div>
-            <div>
+            <div className="relative">
               <label htmlFor="password" className="text-sm text-ink-300 mb-1.5 block">Password</label>
               <input
                 id="password"
                 name="password"
-                type="password"
+                type={showPassword ? 'text' : 'password'}
                 autoComplete="current-password"
                 required
                 minLength={6}
                 value={password}
-                aria-invalid={Boolean(error)}
+                aria-invalid={Boolean(fieldErrors.password)}
+                aria-describedby={fieldErrors.password ? 'password-error' : undefined}
                 onChange={(e) => {
                   setPassword(e.target.value);
                   setError('');
+                  setFieldErrors((current) => ({ ...current, password: '' }));
                   setNotice('');
                 }}
-                className="w-full bg-base-800 border border-border rounded-lg px-3.5 py-2.5 text-sm focus:border-amber outline-none transition-colors"
+                className="w-full bg-base-800 border border-border rounded-lg px-3.5 py-2.5 pr-11 text-sm focus:border-amber outline-none transition-colors"
                 placeholder="••••••••"
               />
               <button
                 type="button"
-                onClick={handlePasswordReset}
-                disabled={loading || !configured}
-                className="mt-2 text-xs text-amber hover:text-amber-soft disabled:opacity-50"
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                aria-pressed={showPassword}
+                onClick={() => setShowPassword((visible) => !visible)}
+                disabled={loading || resetLoading}
+                className="absolute right-3 top-8 text-ink-300 hover:text-ink-100 disabled:opacity-50"
               >
-                {loading ? 'Sending reset link…' : 'Send a secure reset link'}
+                {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
+              </button>
+              {fieldErrors.password && <p id="password-error" className="mt-1 text-xs text-alert">{fieldErrors.password}</p>}
+              <button
+                type="button"
+                onClick={handlePasswordReset}
+                disabled={loading || resetLoading || !configured}
+                className="mt-2 text-xs text-amber hover:text-amber-soft disabled:opacity-50"
+                aria-live="polite"
+              >
+                {resetLoading ? 'Sending your reset email…' : 'Email me a secure reset code'}
               </button>
             </div>
             <button
               type="submit"
-              disabled={loading || !configured}
+              disabled={loading || resetLoading || !configured}
               className="w-full bg-amber text-base-900 font-medium py-2.5 rounded-lg hover:bg-amber-soft transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? <><Loader2 className="inline mr-2 animate-spin" size={16} />Signing you in…</> : 'Sign in'}
@@ -209,7 +231,7 @@ export default function LoginPage() {
 
           <button
             onClick={handleGoogle}
-            disabled={loading || !configured}
+            disabled={loading || resetLoading || !configured}
             className="w-full border border-border py-2.5 rounded-lg hover:bg-base-800 transition-colors text-sm font-medium disabled:opacity-50 flex items-center justify-center gap-2.5"
           >
             <GoogleIcon size={18} />

@@ -49,8 +49,11 @@ for previews and never add secrets to `NEXT_PUBLIC_*`.
 - `SITE_BASE` (canonical HTTPS URL used for invitation and payment return links)
 
 Firebase Admin credentials are required for server-issued HttpOnly session cookies and
-protected API access. If any Admin value is missing, sign-in fails closed with a clear
-configuration response rather than leaving the browser with a half-authenticated session.
+protected API access. The verified session route also creates a missing user profile
+through Admin Firestore, so verify that the service account can access Firestore. This
+avoids making successful Firebase credentials depend on client-side profile-write rules.
+If any Admin value is missing, sign-in fails closed with a clear configuration response
+rather than leaving the browser with a half-authenticated session.
 In Firebase Authentication, enable Email/Password and Google sign-in, configure the
 password-reset email template, and add every production, preview, and local host used for
 sign-in to Authorized domains. Firebase sends a one-time reset link with a protected
