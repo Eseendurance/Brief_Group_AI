@@ -102,7 +102,10 @@ export async function POST(request) {
     const adminDb = getAdminDb();
     if (!adminAuth || !adminDb) {
       return NextResponse.json(
-        { error: 'Secure sign-in is not configured. Contact the site administrator.', code: 'AUTH_NOT_CONFIGURED' },
+        {
+          error: 'The secure account service is not configured. The site administrator must check the Firebase Admin credentials and Firestore access in the production environment.',
+          code: 'AUTH_NOT_CONFIGURED',
+        },
         { status: 503 },
       );
     }

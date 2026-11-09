@@ -211,7 +211,7 @@ export default function LoginPage() {
                 className="mt-2 text-xs text-amber hover:text-amber-soft disabled:opacity-50"
                 aria-live="polite"
               >
-                {resetLoading ? 'Sending your reset email…' : 'Email me a secure reset code'}
+                {resetLoading ? 'Sending your reset link…' : 'Email me a password reset link'}
               </button>
             </div>
             <button
@@ -287,7 +287,7 @@ function mapAuthError(err) {
   if (code.includes('too-many-requests') || err?.status === 429) return 'Too many attempts. Please wait a minute and try again.';
   if (err?.status === 503) return err.message || 'Sign-in protection is temporarily unavailable. Please try again shortly.';
   if (code.toLowerCase().includes('auth_not_configured') || code.includes('session-unavailable')) {
-    return 'Secure sign-in is not ready yet. Please contact the Brief Group team.';
+    return err.message || 'Secure sign-in is temporarily unavailable. Please try again later or contact the Brief Group team.';
   }
   if (code.includes('operation-not-allowed')) return 'Email and password sign-in is not enabled yet. Please contact the Brief Group team.';
   if (code.includes('invalid-api-key')) return 'Sign-in is temporarily unavailable. Please contact the Brief Group team.';

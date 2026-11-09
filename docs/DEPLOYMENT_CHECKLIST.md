@@ -6,11 +6,11 @@ Complete the staging checks before sending real clients to production.
 
 ## 1. Confirm the Vercel project and domains
 
-The supplied screenshots show `brief-group-ai.vercel.app` serving the repository's
-older landing page, while `www.briefgroup.net` serves a different, newer marketing
-experience. The Vercel project screenshot lists `www.briefgroup.net` and
-`brief-group-ai.vercel.app`; it does not show the apex `briefgroup.net`. The apex
-currently redirects to `www`, so both hostnames must be traced to their Vercel projects.
+Earlier screenshots appeared to show different versions on the Vercel alias and
+`www.briefgroup.net`. The latest HTTP check returned the same older landing-page content
+for both sites, while the apex `briefgroup.net` redirects to `www`. This does not prove
+that both hostnames use the intended Vercel project; verify ownership in the Vercel
+dashboard and compare `/api/version` after the next deployment.
 
 - In Vercel, verify the project's Git repository is `Eseendurance/Brief_Group_AI`,
   its production branch is `main`, and its Root Directory points to this Next.js app.
@@ -54,6 +54,9 @@ through Admin Firestore, so verify that the service account can access Firestore
 avoids making successful Firebase credentials depend on client-side profile-write rules.
 If any Admin value is missing, sign-in fails closed with a clear configuration response
 rather than leaving the browser with a half-authenticated session.
+Set `SITE_BASE` to the canonical production origin (for example, `https://briefgroup.net`);
+the server requires this value in production instead of deriving invitation links from
+the request Host header.
 In Firebase Authentication, enable Email/Password and Google sign-in, configure the
 password-reset email template, and add every production, preview, and local host used for
 sign-in to Authorized domains. Firebase sends a one-time reset link with a protected
@@ -82,7 +85,10 @@ intentionally not readable or writable from client SDKs.
 - `UPSTASH_REDIS_REST_URL`
 - `UPSTASH_REDIS_REST_TOKEN`
 
-Production AI and login endpoints fail closed when rate limiting is not configured.
+Rate limiting uses Upstash Redis when configured and falls back to a transactional
+Firestore window counter when Redis is missing or unavailable. Production endpoints
+fail closed when neither backend is available; configure Firestore TTL for the
+`security_rate_limits.expiresAt` field to clean expired counters.
 Login attempts are limited to five per minute per IP and normalized email; failed and
 successful attempt audit events include timestamp, IP, user agent, and a one-way email
 digest in server logs. Confirm the Gemini project has the required quota and that
@@ -131,8 +137,10 @@ provider terms.
 - `RESEND_FROM_EMAIL`
 
 Verify the sending domain before sending client invitations or account mail. The team
-invite flow currently returns a single-use link that an administrator can share; email
-delivery of company invitations is not wired into the invitation endpoint yet.
+invite flow sends a single-use link when Resend is configured. If delivery is not
+configured or fails, the dashboard shows that status and provides the invitation link
+for an administrator to share manually. Verify the sender domain, test delivery and
+bounce handling, and ensure the canonical `SITE_BASE` is set.
 
 ## 3. Deploy and verify
 
@@ -145,6 +153,9 @@ delivery of company invitations is not wired into the invitation endpoint yet.
   can sign in and have a trial profile restored without changing an existing plan.
 - Create an owner workspace; invite a different email; accept the link with that email;
   verify wrong-email, expired, reused, and already-member cases fail.
+- Confirm invitations are delivered through Resend when configured, manual-link fallback
+  is clearly surfaced when not configured, and authorized admins can revoke pending
+  invitations.
 - Confirm owners/admins can manage company details, managers can invite only members and
   viewers, and viewers cannot create energy/fault entries, reports, or inspections.
 - Test denied direct Firestore/Storage writes for viewers; deploy and test rules in a
@@ -162,6 +173,9 @@ delivery of company invitations is not wired into the invitation endpoint yet.
 
 - Organization-wide operational data sharing is not yet migrated: several operational
   modules still scope records to individual user IDs.
+- End-to-end authentication cannot be declared operational until production Firebase
+  credentials, Firestore access, Authorized domains, and real-account sign-in have been
+  verified in the Vercel deployment logs and browser.
 - Billing cancellation, refunds, invoices, tax handling, and entitlement reconciliation
   need end-to-end testing with each live provider.
 - Legal/safety content must be reviewed by qualified local professionals before it is

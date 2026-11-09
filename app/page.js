@@ -7,26 +7,27 @@ import { Zap, Cpu, LineChart, FileText, Eye, ShoppingBag, ArrowRight, CheckCircl
 import PulseGrid from '@/components/PulseGrid';
 
 const MODULES = [
-  { icon: Zap, title: 'Smart Energy Intelligence', phase: 'Core', desc: 'Real-time energy visibility, usage verification, benchmarking, and live site anomaly alerts for power-heavy operations.', color: 'text-amber' },
-  { icon: Cpu, title: 'AI Fault Detection', phase: 'Core', desc: 'Weighted risk scoring identifies which asset or equipment cluster is trending toward failure before downtime hits.', color: 'text-alert' },
-  { icon: LineChart, title: 'AI Recommendations', phase: 'Optimization', desc: 'Operational action plans ranked by impact, cost, urgency, and maintenance priority for teams and leadership.', color: 'text-cyan' },
-  { icon: FileText, title: 'Automated Reports', phase: 'Automation', desc: 'Board-ready reports, compliance summaries, site health notes, and executive reviews generated from real data.', color: 'text-emerald' },
-  { icon: Eye, title: 'Computer Vision Inspection', phase: 'Vision', desc: 'Upload photos of transformers, panels, or machinery to get AI-assisted fault detection and visual risk summaries.', color: 'text-cyan' },
-  { icon: ShoppingBag, title: 'Marketplace & Procurement', phase: 'Growth', desc: 'Trusted vendor and equipment marketplace for parts, maintenance services, and operational sourcing.', color: 'text-amber' },
+  { icon: Zap, title: 'Energy Monitoring', phase: 'Pilot', desc: 'Record energy readings, review usage trends, and flag unusual values for a closer look.', color: 'text-amber' },
+  { icon: Cpu, title: 'Equipment & Fault Records', phase: 'Pilot', desc: 'Keep equipment observations and review risk indicators. These tools support—not replace—qualified inspection.', color: 'text-alert' },
+  { icon: LineChart, title: 'AI Recommendations', phase: 'AI-assisted', desc: 'Generate practical suggestions from the information you provide. Review every recommendation before acting.', color: 'text-cyan' },
+  { icon: FileText, title: 'Reports & Notes', phase: 'AI-assisted', desc: 'Create draft reports and inspection notes from saved information, then review and edit before sharing.', color: 'text-emerald' },
+  { icon: Eye, title: 'Visual Inspection Support', phase: 'AI-assisted', desc: 'Submit equipment images for an AI-generated observation summary; it is not a certified diagnosis.', color: 'text-cyan' },
+  { icon: ShoppingBag, title: 'Marketplace', phase: 'Planned', desc: 'Vendor and equipment discovery is planned and is not currently available for transactions.', color: 'text-amber' },
 ];
 
 const ROADMAP = [
-  { step: '1', title: 'Pilot Launch', desc: 'Live accounts, protected dashboard, reports, and inspections.' },
-  { step: '2', title: 'Field Intelligence', desc: 'Weather, farm signals, energy verification, real-time alerts.' },
-  { step: '3', title: 'Automation Layer', desc: 'Scheduled reports, fault scoring, and admin workflows.' },
-  { step: '4', title: 'Marketplace', desc: 'Opens after pilot validation, connecting vendors and buyers.' },
+  { step: '1', title: 'Controlled pilot', desc: 'Account-based workspace, energy and equipment records, and feedback-led improvements.' },
+  { step: '2', title: 'Field workflows', desc: 'Improve weather, farm, and inspection workflows with clear data sources and limitations.' },
+  { step: '3', title: 'Team operations', desc: 'Add shared company records, site permissions, audit history, and reliable notifications.' },
+  { step: '4', title: 'Marketplace', desc: 'Validate vendor onboarding, payments, and support before opening transactions.' },
 ];
 
 const FAQ = [
-  { q: 'What exactly is the pilot program?', a: 'Selected organizations get free access to Phase 1 — Smart Energy Monitoring with real-time dashboards, anomaly alerts, and automated reporting — in exchange for honest feedback that shapes the product.' },
-  { q: 'Is there any cost to join?', a: 'Zero cost during the pilot. Partners also lock in preferred pricing for life once Brief Group moves to a paid subscription model.' },
-  { q: 'Does it require hardware on-site?', a: 'Phase 1 can begin with existing smart meters and compatible IoT devices. We assess what you already have and work from there.' },
-  { q: 'Is this only for Nigerian businesses?', a: 'No. Brief Group is headquartered in Nigeria but built for global markets from day one.' },
+  { q: 'What is available in the pilot?', a: 'Pilot users can create an account, maintain company and team details, and use the available energy, equipment, reporting, and AI-assisted workflows. Availability and limitations are explained during onboarding.' },
+  { q: 'What does the pilot cost?', a: 'Pilot access and any applicable fees are confirmed with each organization before onboarding. We do not promise lifetime pricing.' },
+  { q: 'Does it require hardware on-site?', a: 'You can start by entering information manually. Device integrations and automated data collection depend on the equipment and are not assumed to be available.' },
+  { q: 'Can AI output be used as professional or safety advice?', a: 'No. AI outputs are drafts to support review, not certified inspections, legal advice, or a substitute for qualified safety and engineering professionals.' },
+  { q: 'Where is Brief Group available?', a: 'Brief Group is based in Nigeria and is developing for organizations in multiple markets. Country-specific legal and safety guidance must be validated locally before use.' },
 ];
 
 function fadeUp(delay = 0) {
@@ -69,18 +70,18 @@ export default function LandingPage() {
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7 }}>
           <span className="inline-flex items-center gap-2 text-xs font-medium text-amber bg-amber/10 border border-amber/20 rounded-full px-3 py-1 mb-6">
             <span className="w-1.5 h-1.5 rounded-full bg-amber animate-nodeGlow" />
-            Now accepting pilot partners
+            Pilot access by application
           </span>
           <h1 className="font-display font-semibold text-4xl sm:text-5xl leading-[1.1] tracking-tight mb-6">
             AI infrastructure intelligence <span className="text-gradient">for the future.</span>
           </h1>
           <p className="text-ink-300 text-lg leading-relaxed mb-8 max-w-lg">
-            Brief Group gives operations teams a real-time command center for energy monitoring, fault detection,
-            farm intelligence, and remote inspection — one platform, six connected systems, born in Nigeria, built for the world.
+            Brief Group helps teams organize energy and equipment records, draft operational reports, and review AI-assisted observations.
+            Start with the information you have; shared company operations and connected hardware are still being developed.
           </p>
           <div className="flex flex-wrap gap-4 mb-10">
             <Link href="/signup" className="inline-flex items-center gap-2 bg-amber text-base-900 font-medium px-5 py-3 rounded-xl hover:bg-amber-soft transition-colors shadow-glow-amber">
-              Start Pilot Program <ArrowRight size={16} />
+              Create an account <ArrowRight size={16} />
             </Link>
             <Link href="/dashboard" className="inline-flex items-center gap-2 border border-border text-ink-100 font-medium px-5 py-3 rounded-xl hover:bg-surface transition-colors">
               View Dashboard
@@ -89,7 +90,7 @@ export default function LandingPage() {
           <div className="flex gap-8 text-sm">
             <div>
               <div className="font-mono text-2xl text-amber font-medium mono-num">6</div>
-              <div className="text-ink-500">Core SaaS modules</div>
+              <div className="text-ink-500">Product areas</div>
             </div>
             <div>
               <div className="font-mono text-2xl text-cyan font-medium mono-num">5</div>
@@ -122,8 +123,7 @@ export default function LandingPage() {
             One platform. Six intelligent systems.
           </h2>
           <p className="text-ink-300 mt-4">
-            IoT, machine learning, computer vision, and marketplace infrastructure — unified into one ecosystem
-            solving real operational problems.
+            A practical pilot toolkit. Features are clearly labeled by availability, and AI-generated content is intended for human review.
           </p>
         </motion.div>
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -184,17 +184,14 @@ export default function LandingPage() {
             Become a founding pilot partner.
           </h2>
           <p className="text-ink-300 max-w-xl mx-auto mb-8">
-            Free Phase 1 access, direct product influence, and pricing locked for life. Pilot spots are limited —
-            every application is reviewed personally.
+            Tell us about your organization and the workflows you need. We will confirm current pilot availability and any applicable terms before you get started.
           </p>
           <div className="flex flex-wrap justify-center gap-4">
             <a
-              href="https://docs.google.com/forms/d/e/1FAIpQLSd-WTLo_0wyV7e97O-hMAFdDI2-IG-IxA7kIQGReslAAjWMsw/viewform"
-              target="_blank"
-              rel="noopener noreferrer"
+              href="/signup"
               className="inline-flex items-center gap-2 bg-amber text-base-900 font-medium px-6 py-3 rounded-xl hover:bg-amber-soft transition-colors shadow-glow-amber"
             >
-              Apply to Join the Pilot <ArrowRight size={16} />
+              Create a pilot account <ArrowRight size={16} />
             </a>
             <a
               href="mailto:Briefgroup1@gmail.com"

@@ -9,6 +9,7 @@ import {
 } from '@/lib/company-access';
 import { getSiteBaseUrl } from '@/lib/site-url';
 import { checkRateLimit, rateLimitFailure } from '@/lib/rate-limit';
+import { sendCompanyInvitationEmail } from '@/lib/email';
 
 export const runtime = 'nodejs';
 
@@ -101,8 +102,23 @@ export async function POST(request) {
     throw error;
   }
 
+  let emailStatus = 'not-configured';
+  try {
+    const delivery = await sendCompanyInvitationEmail({
+      to: email,
+      companyName: context.company.name,
+      role,
+      invitationUrl: invitationUrl.toString(),
+    });
+    emailStatus = delivery.sent ? 'sent' : 'not-configured';
+  } catch (error) {
+    console.error('[COMPANY_INVITATION_EMAIL_ERROR]', error?.message || error);
+    emailStatus = 'failed';
+  }
+
   return NextResponse.json({
     invitation: { email, role, expiresAt: expiresAt.toDate().toISOString() },
     invitationUrl: invitationUrl.toString(),
+    emailStatus,
   }, { status: 201 });
 }

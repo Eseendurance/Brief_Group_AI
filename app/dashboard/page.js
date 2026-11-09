@@ -68,7 +68,7 @@ export default function DashboardOverview() {
         <div>
           <h1 className="font-display font-semibold text-2xl">Pilot Command</h1>
           <p className="text-ink-300 text-sm mt-1">
-            Welcome back{user?.displayName ? `, ${user.displayName.split(' ')[0]}` : ''}. Here's your live operational picture.
+            Welcome back{user?.displayName ? `, ${user.displayName.split(' ')[0]}` : ''}. Here's a summary of your saved operational records.
           </p>
         </div>
         <PulseGrid size="small" className="hidden md:block opacity-80" />

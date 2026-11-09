@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import Link from 'next/link';
 import { AlertCircle, Building2, Copy, Loader2, MailPlus, ShieldCheck, Users } from 'lucide-react';
 import { authedFetch } from '@/lib/api-client';
 import { useAuth } from '@/lib/auth-context';
@@ -47,6 +48,8 @@ export default function AdminDashboardPage() {
     if (!companyData.company) {
       setCompany(null);
       setMembership(null);
+      setMembers([]);
+      setInvitations([]);
       return;
     }
 
@@ -60,6 +63,9 @@ export default function AdminDashboardPage() {
       const teamData = await authedFetch('/api/companies/team');
       setMembers(teamData.members);
       setInvitations(teamData.invitations);
+    } else {
+      setMembers([]);
+      setInvitations([]);
     }
   }, []);
 
@@ -116,7 +122,12 @@ export default function AdminDashboardPage() {
       });
       setInviteLink(result.invitationUrl);
       setInviteEmail('');
-      setNotice(`Invitation created for ${result.invitation.email}. Copy the secure link and share it with them.`);
+      const emailMessage = result.emailStatus === 'sent'
+        ? 'Invitation email sent.'
+        : result.emailStatus === 'failed'
+          ? 'Email delivery failed.'
+          : 'Invitation email is not configured.';
+      setNotice(`${emailMessage} Share the secure link below with ${result.invitation.email}.`);
       await loadWorkspace();
     } catch (requestError) {
       setError(requestError.message);
@@ -168,6 +179,23 @@ export default function AdminDashboardPage() {
     }
   }
 
+  async function revokeInvitation(invitation) {
+    if (!window.confirm(`Revoke the pending invitation for ${invitation.email}? Its link will stop working.`)) return;
+    setBusy(true);
+    setError('');
+    setNotice('');
+    try {
+      await authedFetch(`/api/companies/invitations/${encodeURIComponent(invitation.id)}`, { method: 'DELETE' });
+      setNotice(`Invitation for ${invitation.email} was revoked.`);
+      setInviteLink('');
+      await loadWorkspace();
+    } catch (requestError) {
+      setError(requestError.message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
   if (loading) {
     return <div className="p-12 flex justify-center"><Loader2 className="animate-spin text-amber" size={26} /></div>;
   }
@@ -180,6 +208,9 @@ export default function AdminDashboardPage() {
         <div className="card p-6">
           <h1 className="font-display font-semibold text-2xl">Company workspace</h1>
           <p className="text-sm text-ink-300 mt-2">Set up a company profile to manage teammates and operational access.</p>
+          <Link href="/onboarding" className="inline-flex mt-5 bg-amber text-base-900 font-medium text-sm px-4 py-2.5 rounded-lg">
+            Set up company workspace
+          </Link>
         </div>
       </div>
     );
@@ -320,7 +351,19 @@ export default function AdminDashboardPage() {
                     {invitations.map((invite) => (
                       <li key={invite.id} className="flex items-center justify-between gap-3 text-xs">
                         <span className="truncate">{invite.email} <span className="text-ink-500">· {invite.role}</span></span>
-                        <span className="shrink-0 text-ink-500">Expires {new Date(invite.expiresAt).toLocaleDateString()}</span>
+                        <div className="shrink-0 flex items-center gap-3">
+                          <span className="text-ink-500">Expires {new Date(invite.expiresAt).toLocaleDateString()}</span>
+                          {canManageRole(membership.role, invite.role) && (
+                            <button
+                              type="button"
+                              disabled={busy}
+                              onClick={() => revokeInvitation(invite)}
+                              className="text-alert hover:underline disabled:opacity-50"
+                            >
+                              Revoke
+                            </button>
+                          )}
+                        </div>
                       </li>
                     ))}
                   </ul>
@@ -342,8 +385,8 @@ export default function AdminDashboardPage() {
             ['Owner', 'Full company and team administration.'],
             ['Admin', 'Manage company profile and non-admin team roles.'],
             ['Manager', 'Invite members and viewers; cannot change admin access.'],
-            ['Member', 'Use assigned operational tools.'],
-            ['Viewer', 'Read-only workspace access.'],
+            ['Member', 'Manage their own operational records; company-wide records are not shared yet.'],
+            ['Viewer', 'Read-only access to their own records.'],
           ].map(([role, description]) => (
             <div key={role} className="rounded-lg border border-border p-3">
               <div className="font-medium text-sm">{role}</div>

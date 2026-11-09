@@ -33,8 +33,9 @@ data, access policy, failure states, and operational ownership are implemented.
 4. Complete payment lifecycle coverage for subscription changes, cancellations, failed
    renewals, refunds, duplicate webhooks, and entitlement reconciliation for all three
    providers.
-5. Add invitation email delivery, invitation revocation, and a visible way to resend an
-   invitation. Until then, admins must share the generated invite link themselves.
+5. Test invitation email delivery and revocation in staging; add resend support and
+   delivery-status visibility. If email is unavailable, admins must share the generated
+   invite link themselves.
 6. Add verified-email enforcement and account recovery policy; test on the production
    Firebase authorized-domain list.
 7. Remove any remaining placeholder KPI or “live” wording that is not backed by actual
