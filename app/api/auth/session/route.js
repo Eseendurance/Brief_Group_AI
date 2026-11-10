@@ -119,6 +119,15 @@ export async function POST(request) {
     response.cookies.set(SESSION_COOKIE_NAME, cookie, sessionCookieOptions());
     return response;
   } catch (error) {
+    if (error?.code === 'FIREBASE_ADMIN_INVALID_CONFIGURATION') {
+      return NextResponse.json(
+        {
+          error: 'Secure sign-in is unavailable because the server Firebase Admin credentials could not be initialized. The site administrator must check the Vercel function logs and Firebase Admin environment variables.',
+          code: error.code,
+        },
+        { status: 503 },
+      );
+    }
     if (invalidCredentialCodes.has(error?.code)) {
       return NextResponse.json({ error: 'Sign-in could not be verified. Please try again.', code: 'INVALID_CREDENTIAL' }, { status: 401 });
     }

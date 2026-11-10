@@ -1,220 +1,418 @@
 'use client';
 
-import { motion } from 'framer-motion';
+import { AnimatePresence, MotionConfig, motion, useReducedMotion } from 'framer-motion';
+import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Zap, Cpu, LineChart, FileText, Eye, ShoppingBag, ArrowRight, CheckCircle2 } from 'lucide-react';
-import PulseGrid from '@/components/PulseGrid';
+import {
+  ArrowDown,
+  ArrowRight,
+  ChevronLeft,
+  ChevronRight,
+  Eye,
+  FileText,
+  MapPinned,
+  Pause,
+  Play,
+  ShieldCheck,
+  Sprout,
+  Wrench,
+  Zap,
+} from 'lucide-react';
 
-const MODULES = [
-  { icon: Zap, title: 'Energy Monitoring', phase: 'Pilot', desc: 'Record energy readings, review usage trends, and flag unusual values for a closer look.', color: 'text-amber' },
-  { icon: Cpu, title: 'Equipment & Fault Records', phase: 'Pilot', desc: 'Keep equipment observations and review risk indicators. These tools support—not replace—qualified inspection.', color: 'text-alert' },
-  { icon: LineChart, title: 'AI Recommendations', phase: 'AI-assisted', desc: 'Generate practical suggestions from the information you provide. Review every recommendation before acting.', color: 'text-cyan' },
-  { icon: FileText, title: 'Reports & Notes', phase: 'AI-assisted', desc: 'Create draft reports and inspection notes from saved information, then review and edit before sharing.', color: 'text-emerald' },
-  { icon: Eye, title: 'Visual Inspection Support', phase: 'AI-assisted', desc: 'Submit equipment images for an AI-generated observation summary; it is not a certified diagnosis.', color: 'text-cyan' },
-  { icon: ShoppingBag, title: 'Marketplace', phase: 'Planned', desc: 'Vendor and equipment discovery is planned and is not currently available for transactions.', color: 'text-amber' },
+const FIELD_PHOTOS = [
+  {
+    src: '/briefgroup-farm-operations.png',
+    alt: 'Illustrative Brief Group farm operations scene',
+    caption: 'A closer view of the work in the field.',
+  },
+  {
+    src: '/briefgroup-office.png',
+    alt: 'Illustrative Brief Group office scene',
+    caption: 'A little more room to think things through.',
+  },
+  {
+    src: '/briefgroup-field-engineer.png',
+    alt: 'Illustrative Brief Group site inspection scene',
+    caption: 'The details matter when you are on site.',
+  },
+  {
+    src: '/briefgroup-workspace.png',
+    alt: 'Illustrative Brief Group workspace scene',
+    caption: 'Planning starts with a clear picture.',
+  },
+  {
+    src: '/briefgroup-solar-inspection.png',
+    alt: 'Illustrative Brief Group solar inspection scene',
+    caption: 'Thoughtful checks, one step at a time.',
+  },
+  {
+    src: '/briefgroup-farm-survey.png',
+    alt: 'Illustrative Brief Group farm survey scene',
+    caption: 'Bring field observations into your routine.',
+  },
+  {
+    src: '/briefgroup-field-team.png',
+    alt: 'Illustrative Brief Group field work scene',
+    caption: 'Keep useful notes close to the work.',
+  },
 ];
 
-const ROADMAP = [
-  { step: '1', title: 'Controlled pilot', desc: 'Account-based workspace, energy and equipment records, and feedback-led improvements.' },
-  { step: '2', title: 'Field workflows', desc: 'Improve weather, farm, and inspection workflows with clear data sources and limitations.' },
-  { step: '3', title: 'Team operations', desc: 'Add shared company records, site permissions, audit history, and reliable notifications.' },
-  { step: '4', title: 'Marketplace', desc: 'Validate vendor onboarding, payments, and support before opening transactions.' },
+const TOOLS = [
+  {
+    icon: Zap,
+    title: 'Energy readings',
+    status: 'Available',
+    description: 'Record usage and review changes over time. You can start manually; connected meter data is not assumed.',
+  },
+  {
+    icon: Wrench,
+    title: 'Equipment records',
+    status: 'Available',
+    description: 'Keep asset details and observations together so your team has a clearer maintenance history.',
+  },
+  {
+    icon: Eye,
+    title: 'Inspection support',
+    status: 'AI-assisted',
+    description: 'Turn submitted equipment photos into draft observations. A qualified person still needs to verify findings.',
+  },
+  {
+    icon: FileText,
+    title: 'Reports and notes',
+    status: 'AI-assisted',
+    description: 'Create a first draft from information you provide, then check it before sharing or relying on it.',
+  },
+  {
+    icon: Sprout,
+    title: 'Farm conditions',
+    status: 'Available',
+    description: 'Review weather-based crop observations using live forecast data and the location you select.',
+  },
+  {
+    icon: MapPinned,
+    title: 'Sites and maps',
+    status: 'In progress',
+    description: 'Location tools are being refined. Add only the site information your organization is comfortable sharing.',
+  },
 ];
 
-const FAQ = [
-  { q: 'What is available in the pilot?', a: 'Pilot users can create an account, maintain company and team details, and use the available energy, equipment, reporting, and AI-assisted workflows. Availability and limitations are explained during onboarding.' },
-  { q: 'What does the pilot cost?', a: 'Pilot access and any applicable fees are confirmed with each organization before onboarding. We do not promise lifetime pricing.' },
-  { q: 'Does it require hardware on-site?', a: 'You can start by entering information manually. Device integrations and automated data collection depend on the equipment and are not assumed to be available.' },
-  { q: 'Can AI output be used as professional or safety advice?', a: 'No. AI outputs are drafts to support review, not certified inspections, legal advice, or a substitute for qualified safety and engineering professionals.' },
-  { q: 'Where is Brief Group available?', a: 'Brief Group is based in Nigeria and is developing for organizations in multiple markets. Country-specific legal and safety guidance must be validated locally before use.' },
+const STEPS = [
+  ['01', 'Set up your space', 'Add your organization details and choose who can manage the workspace.'],
+  ['02', 'Start with a record', 'Enter an energy reading, equipment detail, or field observation. No hardware connection is required to begin.'],
+  ['03', 'Review and share carefully', 'Use reports and AI-assisted drafts as a starting point, with a person responsible for checking the result.'],
 ];
 
-function fadeUp(delay = 0) {
-  return {
-    initial: { opacity: 0, y: 24 },
-    whileInView: { opacity: 1, y: 0 },
-    viewport: { once: true, margin: '-80px' },
-    transition: { duration: 0.6, delay, ease: 'easeOut' },
-  };
+const QUESTIONS = [
+  {
+    question: 'Can my coworkers see all of my records?',
+    answer: 'Not yet. Company profiles and team roles are available, but most operational records are still tied to individual accounts. Do not use the workspace as shared company record storage until that migration is complete.',
+  },
+  {
+    question: 'Does Brief Group replace a safety inspection?',
+    answer: 'No. The platform can help organize information and draft observations. It does not certify equipment, confirm legal compliance, or replace a qualified safety or engineering professional.',
+  },
+  {
+    question: 'Do I need to connect equipment first?',
+    answer: 'No. You can enter information yourself. Automated meter and device connections depend on the equipment and are not represented as available by default.',
+  },
+  {
+    question: 'What does access cost?',
+    answer: 'Pilot availability and any fees are confirmed with each organization before onboarding. Contact us if you need current pricing or a walkthrough.',
+  },
+];
+
+function FieldPhotoCarousel() {
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [paused, setPaused] = useState(false);
+  const [hovered, setHovered] = useState(false);
+  const [focused, setFocused] = useState(false);
+  const prefersReducedMotion = useReducedMotion();
+  const shouldPause = paused || hovered || focused || prefersReducedMotion;
+
+  useEffect(() => {
+    if (shouldPause) return undefined;
+    const timer = window.setInterval(() => {
+      setActiveIndex((index) => (index + 1) % FIELD_PHOTOS.length);
+    }, 9000);
+    return () => window.clearInterval(timer);
+  }, [shouldPause]);
+
+  function showPhoto(index) {
+    setActiveIndex((index + FIELD_PHOTOS.length) % FIELD_PHOTOS.length);
+  }
+
+  return (
+    <div
+      className="relative mx-auto w-full max-w-[560px] px-1 py-5 sm:px-4 sm:py-8"
+      role="region"
+      aria-roledescription="carousel"
+      aria-label="Illustrative Brief Group field and workspace photos"
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      onFocusCapture={() => setFocused(true)}
+      onBlurCapture={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget)) setFocused(false);
+      }}
+    >
+      <div className="relative aspect-[0.94] overflow-hidden rounded-[26px] bg-[#E9EDF2] shadow-[0_24px_70px_rgba(18,41,79,0.16)] sm:aspect-[1.04]">
+        <AnimatePresence mode="wait" initial={false}>
+          <motion.div
+            key={FIELD_PHOTOS[activeIndex].src}
+            className="absolute inset-0"
+            initial={{ opacity: 0, scale: prefersReducedMotion ? 1 : 1.025 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: prefersReducedMotion ? 0 : 0.65, ease: 'easeOut' }}
+          >
+            <Image
+              src={FIELD_PHOTOS[activeIndex].src}
+              alt={FIELD_PHOTOS[activeIndex].alt}
+              fill
+              priority={activeIndex === 0}
+              sizes="(max-width: 1024px) 90vw, 540px"
+              className="object-cover"
+            />
+          </motion.div>
+        </AnimatePresence>
+
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-48 bg-gradient-to-t from-black/75 via-black/25 to-transparent sm:h-56" />
+        <div className="absolute left-4 top-4 z-20 rounded-full border border-white/35 bg-black/35 px-3 py-1.5 text-[10px] font-medium tracking-wide text-white backdrop-blur-sm sm:left-5 sm:top-5 sm:text-xs">
+          Illustrative Brief Group imagery
+        </div>
+        <div className="absolute inset-x-4 bottom-4 z-20 sm:inset-x-5 sm:bottom-5">
+          <p className="max-w-sm text-lg font-medium leading-snug text-white sm:text-2xl">
+            {FIELD_PHOTOS[activeIndex].caption}
+          </p>
+          <div className="mt-4 flex items-center justify-between gap-4">
+            <div className="flex items-center gap-1.5" role="group" aria-label="Choose a photo">
+              {FIELD_PHOTOS.map((photo, index) => (
+                <button
+                  key={photo.src}
+                  type="button"
+                  aria-label={`Show photo ${index + 1} of ${FIELD_PHOTOS.length}`}
+                  aria-pressed={activeIndex === index}
+                  onClick={() => showPhoto(index)}
+                  className={`h-1.5 rounded-full transition-all ${activeIndex === index ? 'w-6 bg-white' : 'w-1.5 bg-white/55 hover:bg-white/85'}`}
+                />
+              ))}
+            </div>
+            <div className="flex items-center gap-1.5">
+              <button
+                type="button"
+                onClick={() => showPhoto(activeIndex - 1)}
+                aria-label="Show previous photo"
+                className="flex h-9 w-9 items-center justify-center rounded-full border border-white/45 bg-black/25 text-white backdrop-blur-sm transition-colors hover:bg-black/50"
+              >
+                <ChevronLeft size={18} />
+              </button>
+              <button
+                type="button"
+                onClick={() => showPhoto(activeIndex + 1)}
+                aria-label="Show next photo"
+                className="flex h-9 w-9 items-center justify-center rounded-full border border-white/45 bg-black/25 text-white backdrop-blur-sm transition-colors hover:bg-black/50"
+              >
+                <ChevronRight size={18} />
+              </button>
+              {!prefersReducedMotion && (
+                <button
+                  type="button"
+                  onClick={() => setPaused((value) => !value)}
+                  aria-label={paused ? 'Play automatic photo changes' : 'Pause automatic photo changes'}
+                  aria-pressed={paused}
+                  className="flex h-9 w-9 items-center justify-center rounded-full border border-white/45 bg-black/25 text-white backdrop-blur-sm transition-colors hover:bg-black/50"
+                >
+                  {paused ? <Play size={15} /> : <Pause size={15} />}
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+      <p className="mt-3 px-1 text-[11px] leading-5 text-ink-500">
+        These images are illustrative and are not customer stories or evidence of live monitoring.
+      </p>
+    </div>
+  );
+}
+
+function SectionHeading({ eyebrow, title, children }) {
+  return (
+    <div className="mb-10 max-w-2xl">
+      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-cyan">{eyebrow}</p>
+      <h2 className="mt-3 font-display text-3xl font-semibold leading-tight tracking-tight text-ink-100 sm:text-4xl">{title}</h2>
+      {children && <p className="mt-4 max-w-xl text-sm leading-7 text-ink-300 sm:text-base">{children}</p>}
+    </div>
+  );
 }
 
 export default function LandingPage() {
   return (
-    <main className="min-h-screen bg-base-900 overflow-x-hidden">
-      {/* Nav */}
-      <header className="sticky top-0 z-50 backdrop-blur-md bg-base-900/80 border-b border-border">
-        <nav className="max-w-7xl mx-auto flex items-center justify-between px-6 py-4">
-          <div className="flex items-center gap-2">
-            <Image src="/logo.png" alt="Brief Group" width={36} height={36} className="h-9 w-9 object-contain" />
-            <span className="font-display font-semibold text-lg tracking-tight">Brief Group</span>
-          </div>
-          <div className="hidden md:flex items-center gap-8 text-sm text-ink-300">
-            <a href="#solutions" className="hover:text-ink-100 transition-colors">Solutions</a>
-            <Link href="/pricing" className="hover:text-ink-100 transition-colors">Pricing</Link>
-            <a href="#roadmap" className="hover:text-ink-100 transition-colors">Roadmap</a>
-            <a href="#faq" className="hover:text-ink-100 transition-colors">FAQ</a>
-            <Link href="/contact" className="hover:text-ink-100 transition-colors">Contact</Link>
-          </div>
-          <div className="flex items-center gap-3">
-            <Link href="/login" className="text-sm text-ink-300 hover:text-ink-100 transition-colors hidden sm:block">Log in</Link>
-            <Link href="/signup" className="text-sm font-medium bg-amber text-base-900 px-4 py-2 rounded-lg hover:bg-amber-soft transition-colors shadow-glow-amber">
-              Apply for Pilot
+    <MotionConfig reducedMotion="user">
+      <main className="min-h-screen overflow-hidden bg-white text-ink-100">
+        <header className="sticky top-0 z-50 border-b border-[#E8EAF0]/90 bg-white/95 backdrop-blur">
+          <nav className="mx-auto flex max-w-7xl items-center justify-between px-5 py-3.5 sm:px-8">
+            <Link href="/" className="flex items-center gap-2.5" aria-label="Brief Group home">
+              <Image src="/logo-192.png" alt="" width={34} height={34} className="h-[34px] w-[34px] object-contain" priority />
+              <span className="font-display text-base font-semibold tracking-tight">Brief Group</span>
             </Link>
-          </div>
-        </nav>
-      </header>
-
-      {/* Hero */}
-      <section className="relative max-w-7xl mx-auto px-6 pt-20 pb-24 grid lg:grid-cols-2 gap-12 items-center bg-grid-fade">
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7 }}>
-          <span className="inline-flex items-center gap-2 text-xs font-medium text-amber bg-amber/10 border border-amber/20 rounded-full px-3 py-1 mb-6">
-            <span className="w-1.5 h-1.5 rounded-full bg-amber animate-nodeGlow" />
-            Pilot access by application
-          </span>
-          <h1 className="font-display font-semibold text-4xl sm:text-5xl leading-[1.1] tracking-tight mb-6">
-            AI infrastructure intelligence <span className="text-gradient">for the future.</span>
-          </h1>
-          <p className="text-ink-300 text-lg leading-relaxed mb-8 max-w-lg">
-            Brief Group helps teams organize energy and equipment records, draft operational reports, and review AI-assisted observations.
-            Start with the information you have; shared company operations and connected hardware are still being developed.
-          </p>
-          <div className="flex flex-wrap gap-4 mb-10">
-            <Link href="/signup" className="inline-flex items-center gap-2 bg-amber text-base-900 font-medium px-5 py-3 rounded-xl hover:bg-amber-soft transition-colors shadow-glow-amber">
-              Create an account <ArrowRight size={16} />
-            </Link>
-            <Link href="/dashboard" className="inline-flex items-center gap-2 border border-border text-ink-100 font-medium px-5 py-3 rounded-xl hover:bg-surface transition-colors">
-              View Dashboard
-            </Link>
-          </div>
-          <div className="flex gap-8 text-sm">
-            <div>
-              <div className="font-mono text-2xl text-amber font-medium mono-num">6</div>
-              <div className="text-ink-500">Product areas</div>
+            <div className="hidden items-center gap-7 text-sm text-ink-300 md:flex">
+              <a href="#tools" className="transition-colors hover:text-ink-100">Tools</a>
+              <a href="#how-it-works" className="transition-colors hover:text-ink-100">How it works</a>
+              <a href="#limits" className="transition-colors hover:text-ink-100">What to know</a>
+              <Link href="/contact" className="transition-colors hover:text-ink-100">Contact</Link>
             </div>
-            <div>
-              <div className="font-mono text-2xl text-cyan font-medium mono-num">5</div>
-              <div className="text-ink-500">Company access roles</div>
+            <div className="flex items-center gap-3">
+              <Link href="/login" className="hidden rounded-lg px-3 py-2 text-sm font-medium text-ink-300 transition-colors hover:text-ink-100 sm:inline-flex">Sign in</Link>
+              <Link href="/signup" className="inline-flex items-center gap-2 rounded-lg bg-amber px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-alert">
+                Create account <ArrowRight size={15} />
+              </Link>
             </div>
-            <div>
-              <div className="font-mono text-2xl text-emerald font-medium mono-num">7 days</div>
-              <div className="text-ink-500">Secure team invitations</div>
-            </div>
-          </div>
-        </motion.div>
+          </nav>
+        </header>
 
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.8, delay: 0.2 }}
-          className="flex justify-center animate-floaty"
-        >
-          <div className="card p-10 shadow-card">
-            <PulseGrid size="large" />
-          </div>
-        </motion.div>
-      </section>
-
-      {/* Product suite */}
-      <section id="solutions" className="max-w-7xl mx-auto px-6 py-24">
-        <motion.div {...fadeUp()} className="mb-14 max-w-2xl">
-          <span className="text-cyan text-sm font-medium">What we do</span>
-          <h2 className="font-display font-semibold text-3xl sm:text-4xl mt-2 tracking-tight">
-            One platform. Six intelligent systems.
-          </h2>
-          <p className="text-ink-300 mt-4">
-            A practical pilot toolkit. Features are clearly labeled by availability, and AI-generated content is intended for human review.
-          </p>
-        </motion.div>
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {MODULES.map((m, i) => (
-            <motion.div key={m.title} {...fadeUp(i * 0.08)} className="card p-6 hover:border-amber/30 transition-colors group">
-              <m.icon className={`${m.color} mb-4`} size={26} />
-              <div className="text-xs text-ink-500 mb-1">{m.phase}</div>
-              <h3 className="font-display font-medium text-lg mb-2">{m.title}</h3>
-              <p className="text-ink-300 text-sm leading-relaxed">{m.desc}</p>
-            </motion.div>
-          ))}
-        </div>
-      </section>
-
-      {/* Roadmap */}
-      <section id="roadmap" className="max-w-7xl mx-auto px-6 py-24 border-t border-border">
-        <motion.div {...fadeUp()} className="mb-14 max-w-2xl">
-          <span className="text-emerald text-sm font-medium">Roadmap</span>
-          <h2 className="font-display font-semibold text-3xl sm:text-4xl mt-2 tracking-tight">
-            A practical path from pilot to global operations.
-          </h2>
-        </motion.div>
-        <div className="grid md:grid-cols-4 gap-5">
-          {ROADMAP.map((r, i) => (
-            <motion.div key={r.step} {...fadeUp(i * 0.1)} className="relative card p-6">
-              <div className="font-mono text-amber text-sm mb-3 mono-num">{r.step.padStart(2, '0')}</div>
-              <h3 className="font-display font-medium mb-2">{r.title}</h3>
-              <p className="text-ink-300 text-sm">{r.desc}</p>
-            </motion.div>
-          ))}
-        </div>
-      </section>
-
-      {/* FAQ */}
-      <section id="faq" className="max-w-4xl mx-auto px-6 py-24 border-t border-border">
-        <motion.div {...fadeUp()} className="mb-12">
-          <h2 className="font-display font-semibold text-3xl tracking-tight">Common questions</h2>
-        </motion.div>
-        <div className="space-y-4">
-          {FAQ.map((f, i) => (
-            <motion.div key={f.q} {...fadeUp(i * 0.06)} className="card p-6">
-              <div className="flex items-start gap-3">
-                <CheckCircle2 className="text-emerald shrink-0 mt-0.5" size={18} />
-                <div>
-                  <h3 className="font-medium mb-1.5">{f.q}</h3>
-                  <p className="text-ink-300 text-sm leading-relaxed">{f.a}</p>
-                </div>
+        <section className="relative isolate border-b border-[#E8EAF0] bg-[linear-gradient(180deg,#F8F9FB_0%,#FFFFFF_100%)]">
+          <div className="mx-auto grid max-w-7xl items-center gap-6 px-5 pb-12 pt-10 sm:px-8 sm:pb-20 sm:pt-16 lg:grid-cols-[0.95fr_1.05fr] lg:gap-0 lg:py-16">
+            <motion.div
+              className="relative z-20 max-w-xl"
+              initial={{ opacity: 0, y: 14 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.55 }}
+            >
+              <span className="inline-flex items-center gap-2 rounded-full border border-[#DDE3ED] bg-white px-3 py-1.5 text-xs font-medium text-cyan">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald" />
+                A practical operations workspace
+              </span>
+              <h1 className="mt-6 font-display text-[2.65rem] font-semibold leading-[1.08] tracking-[-0.045em] text-ink-100 sm:text-5xl lg:text-[3.55rem]">
+                Keep the details of your work in one place.
+              </h1>
+              <p className="mt-5 max-w-lg text-base leading-7 text-ink-300 sm:text-lg sm:leading-8">
+                Organize energy readings, equipment notes, and inspection records with a workspace your team can grow into.
+                Start with the information you already have.
+              </p>
+              <div className="mt-7 flex flex-wrap items-center gap-3">
+                <Link href="/signup" className="inline-flex items-center gap-2 rounded-xl bg-amber px-5 py-3 text-sm font-semibold text-white shadow-[0_8px_22px_rgba(215,38,61,0.18)] transition-transform hover:-translate-y-0.5 hover:bg-alert">
+                  Create your account <ArrowRight size={16} />
+                </Link>
+                <a href="#tools" className="inline-flex items-center gap-2 rounded-xl border border-[#DDE1E8] bg-white px-5 py-3 text-sm font-semibold text-cyan transition-colors hover:bg-[#F7F8FA]">
+                  Explore the tools <ArrowDown size={15} />
+                </a>
               </div>
+              <p className="mt-5 max-w-lg text-xs leading-5 text-ink-500">
+                This is an early-stage product. Company and team setup is available; most operational records are not yet shared across team accounts.
+              </p>
             </motion.div>
-          ))}
-        </div>
-      </section>
-
-      {/* Pilot CTA */}
-      <section id="pilot" className="max-w-5xl mx-auto px-6 py-24 border-t border-border text-center">
-        <motion.div {...fadeUp()}>
-          <h2 className="font-display font-semibold text-3xl sm:text-4xl tracking-tight mb-4">
-            Become a founding pilot partner.
-          </h2>
-          <p className="text-ink-300 max-w-xl mx-auto mb-8">
-            Tell us about your organization and the workflows you need. We will confirm current pilot availability and any applicable terms before you get started.
-          </p>
-          <div className="flex flex-wrap justify-center gap-4">
-            <a
-              href="/signup"
-              className="inline-flex items-center gap-2 bg-amber text-base-900 font-medium px-6 py-3 rounded-xl hover:bg-amber-soft transition-colors shadow-glow-amber"
-            >
-              Create a pilot account <ArrowRight size={16} />
-            </a>
-            <a
-              href="mailto:Briefgroup1@gmail.com"
-              className="inline-flex items-center gap-2 border border-border px-6 py-3 rounded-xl hover:bg-surface transition-colors"
-            >
-              Email Us
-            </a>
+            <FieldPhotoCarousel />
           </div>
-        </motion.div>
-      </section>
+        </section>
 
-      {/* Footer */}
-      <footer className="border-t border-border">
-        <div className="max-w-7xl mx-auto px-6 py-10 flex flex-col sm:flex-row justify-between items-center gap-4 text-sm text-ink-500">
-          <span>© 2026 Brief Group. Headquartered in Nigeria. All rights reserved.</span>
-          <div className="flex gap-6">
-            <Link href="/privacy" className="hover:text-ink-100 transition-colors">Privacy</Link>
-            <Link href="/terms" className="hover:text-ink-100 transition-colors">Terms</Link>
-            <a href="tel:+2348152158339" className="hover:text-ink-100 transition-colors">+234 815 215 8339</a>
-            <a href="https://wa.me/2348152158339" target="_blank" rel="noopener noreferrer" className="hover:text-ink-100 transition-colors">WhatsApp</a>
+        <section id="tools" className="mx-auto max-w-7xl scroll-mt-24 px-5 py-16 sm:px-8 sm:py-24">
+          <SectionHeading eyebrow="Tools for everyday work" title="Start with a clear record.">
+            Use the parts of Brief Group that fit your workflow today. Each tool is labeled honestly, and important decisions stay with your team.
+          </SectionHeading>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {TOOLS.map(({ icon: Icon, title, status, description }, index) => (
+              <motion.article
+                key={title}
+                className="rounded-2xl border border-[#E5E8ED] bg-white p-5 transition-shadow hover:shadow-[0_12px_35px_rgba(18,41,79,0.07)] sm:p-6"
+                initial={{ opacity: 0, y: 14 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: '-40px' }}
+                transition={{ duration: 0.4, delay: index * 0.04 }}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#F3F5F8] text-cyan"><Icon size={20} /></span>
+                  <span className="rounded-full bg-[#F5F6F8] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-ink-500">{status}</span>
+                </div>
+                <h3 className="mt-5 font-display text-lg font-semibold tracking-tight">{title}</h3>
+                <p className="mt-2 text-sm leading-6 text-ink-300">{description}</p>
+              </motion.article>
+            ))}
           </div>
-        </div>
-      </footer>
-    </main>
+        </section>
+
+        <section id="how-it-works" className="scroll-mt-24 border-y border-[#E8EAF0] bg-[#F7F8FA]">
+          <div className="mx-auto grid max-w-7xl gap-10 px-5 py-16 sm:px-8 sm:py-20 lg:grid-cols-[0.8fr_1.2fr] lg:gap-20">
+            <div>
+              <SectionHeading eyebrow="Getting started" title="A calmer way to get organized.">
+                No complicated setup is needed to begin. Bring the details you have, and build from there.
+              </SectionHeading>
+              <Link href="/onboarding" className="inline-flex items-center gap-2 text-sm font-semibold text-cyan hover:text-amber">
+                Learn about company setup <ArrowRight size={15} />
+              </Link>
+            </div>
+            <div className="space-y-3">
+              {STEPS.map(([number, title, description]) => (
+                <div key={number} className="flex gap-4 rounded-2xl border border-[#E5E8ED] bg-white p-5 sm:gap-6 sm:p-6">
+                  <span className="pt-0.5 font-mono text-xs font-medium text-amber">{number}</span>
+                  <div>
+                    <h3 className="font-display font-semibold tracking-tight">{title}</h3>
+                    <p className="mt-1.5 text-sm leading-6 text-ink-300">{description}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section id="limits" className="mx-auto grid max-w-7xl scroll-mt-24 gap-10 px-5 py-16 sm:px-8 sm:py-24 lg:grid-cols-[0.8fr_1.2fr] lg:gap-20">
+          <div>
+            <SectionHeading eyebrow="Important to know" title="Useful support, with people in charge.">
+              Brief Group is designed to help organize operational work—not make safety-critical decisions on your behalf.
+            </SectionHeading>
+            <div className="rounded-2xl border border-[#E5E8ED] bg-[#F7F8FA] p-5">
+              <div className="flex items-start gap-3">
+                <ShieldCheck className="mt-0.5 shrink-0 text-cyan" size={20} />
+                <p className="text-sm leading-6 text-ink-300">
+                  AI output can be incomplete or wrong. Verify generated notes and recommendations, and follow your organization’s approved procedures and local requirements.
+                </p>
+              </div>
+            </div>
+          </div>
+          <div className="divide-y divide-[#E8EAF0]">
+            {QUESTIONS.map(({ question, answer }) => (
+              <article key={question} className="py-5 first:pt-0 last:pb-0">
+                <h3 className="font-display text-base font-semibold tracking-tight">{question}</h3>
+                <p className="mt-2 text-sm leading-6 text-ink-300">{answer}</p>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <section className="border-t border-[#E8EAF0] bg-[#F7F8FA]">
+          <div className="mx-auto flex max-w-7xl flex-col items-start justify-between gap-6 px-5 py-12 sm:px-8 md:flex-row md:items-center md:py-16">
+            <div className="max-w-2xl">
+              <h2 className="font-display text-2xl font-semibold tracking-tight sm:text-3xl">See if Brief Group fits your team.</h2>
+              <p className="mt-3 text-sm leading-6 text-ink-300">
+                Create an account to explore the current pilot, or contact us to talk through your organization’s needs.
+              </p>
+            </div>
+            <div className="flex shrink-0 flex-wrap gap-3">
+              <Link href="/signup" className="inline-flex items-center gap-2 rounded-xl bg-amber px-5 py-3 text-sm font-semibold text-white hover:bg-alert">
+                Create account <ArrowRight size={15} />
+              </Link>
+              <Link href="/contact" className="inline-flex items-center rounded-xl border border-[#DDE1E8] bg-white px-5 py-3 text-sm font-semibold text-cyan hover:bg-[#F2F4F7]">
+                Contact us
+              </Link>
+            </div>
+          </div>
+        </section>
+
+        <footer className="border-t border-[#E8EAF0] bg-white">
+          <div className="mx-auto flex max-w-7xl flex-col gap-5 px-5 py-7 text-xs text-ink-500 sm:px-8 md:flex-row md:items-center md:justify-between">
+            <div className="flex items-center gap-2">
+              <Image src="/logo-192.png" alt="" width={24} height={24} className="h-6 w-6 object-contain" />
+              <span>© 2026 Brief Group · Based in Nigeria</span>
+            </div>
+            <div className="flex flex-wrap gap-x-5 gap-y-2">
+              <Link href="/privacy" className="hover:text-ink-100">Privacy</Link>
+              <Link href="/terms" className="hover:text-ink-100">Terms</Link>
+              <Link href="/contact" className="hover:text-ink-100">Support</Link>
+              <a href="mailto:Briefgroup1@gmail.com" className="hover:text-ink-100">Briefgroup1@gmail.com</a>
+            </div>
+          </div>
+        </footer>
+      </main>
+    </MotionConfig>
   );
 }

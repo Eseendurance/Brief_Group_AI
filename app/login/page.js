@@ -286,6 +286,9 @@ function mapAuthError(err) {
   }
   if (code.includes('too-many-requests') || err?.status === 429) return 'Too many attempts. Please wait a minute and try again.';
   if (err?.status === 503) return err.message || 'Sign-in protection is temporarily unavailable. Please try again shortly.';
+  if (err?.status >= 500) {
+    return 'Secure sign-in could not reach the account service. Please try again later; the site administrator should check the Vercel function logs and Firebase Admin setup.';
+  }
   if (code.toLowerCase().includes('auth_not_configured') || code.includes('session-unavailable')) {
     return err.message || 'Secure sign-in is temporarily unavailable. Please try again later or contact the Brief Group team.';
   }

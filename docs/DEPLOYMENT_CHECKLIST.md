@@ -7,28 +7,26 @@ Complete the staging checks before sending real clients to production.
 ## 1. Confirm the Vercel project and domains
 
 Earlier screenshots appeared to show different versions on the Vercel alias and
-`www.briefgroup.net`. The latest HTTP check returned the same older landing-page content
-for both sites, while the apex `briefgroup.net` redirects to `www`. This does not prove
-that both hostnames use the intended Vercel project; verify ownership in the Vercel
-dashboard and compare `/api/version` after the next deployment.
+`www.briefgroup.net`. On November 9, both `/api/version` endpoints reported the same
+production commit (`18a82662d9d26d2a26a68e78c7bd24cc481071e5`), and the apex
+`briefgroup.net` redirected to `www`. This confirms the aliases matched at that check;
+it does not prove that the correct source branch is configured. After this release,
+verify the production commit, Node version, and Firebase Admin configuration from
+`/api/version`.
 
 - In Vercel, verify the project's Git repository is `Eseendurance/Brief_Group_AI`,
   its production branch is `main`, and its Root Directory points to this Next.js app.
 - Confirm the newest production deployment was built from the intended commit and
   that both `brief-group-ai.vercel.app` and the desired production hostname are assigned
   to that deployment.
-- Decide which source owns the newer `briefgroup.net` experience. If that experience
-  is built from a different repository, connect its source or port that experience into
-  this repository before moving its domain. Do not repoint the domain blindly: doing so
-  would replace the current marketing site with this repository's older landing page.
-- If this repository is the intended production app, add both `briefgroup.net` and
-  `www.briefgroup.net` to the same Vercel project. Choose one canonical hostname and
-  configure the other to redirect to it. Use the exact DNS records Vercel displays for
-  this project, remove conflicting records only after confirming ownership, and wait
-  for Vercel's domain verification and TLS certificate.
+- Confirm `briefgroup.net` and `www.briefgroup.net` are assigned to the intended
+  project, and choose one canonical hostname with the other redirecting to it. Use the
+  exact DNS records Vercel displays, remove conflicting records only after confirming
+  ownership, and wait for domain verification and TLS.
 - Re-test the two hostnames and the Vercel alias in a private browser window after
-  deployment. Their page title, build version, login/register paths, and assets should
-  match. If they do not, check the domain's assigned project/deployment and DNS cache.
+  deployment. Their page title, `/api/version` commit and Node version, login/register
+  paths, and assets should match. Confirm the runtime is Node 22 or newer. If they do
+  not, check the domain's assigned project/deployment and DNS cache.
 
 ## 2. Configure Vercel environment variables
 
@@ -151,6 +149,10 @@ bounce handling, and ensure the canonical `SITE_BASE` is set.
   production), the cookie clears on sign-out, and protected APIs work without an
   Authorization bearer header. Confirm existing Firebase users with a missing profile
   can sign in and have a trial profile restored without changing an existing plan.
+- Send a malformed JSON body to `/api/auth/session` and `/api/auth/login-attempt` in
+  staging; each should return a JSON 400 response. An empty 500 response indicates a
+  function/runtime failure and must be investigated in Vercel function logs before
+  inviting users.
 - Create an owner workspace; invite a different email; accept the link with that email;
   verify wrong-email, expired, reused, and already-member cases fail.
 - Confirm invitations are delivered through Resend when configured, manual-link fallback
