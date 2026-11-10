@@ -41,17 +41,22 @@ for previews and never add secrets to `NEXT_PUBLIC_*`.
 - `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET`
 - `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID`
 - `NEXT_PUBLIC_FIREBASE_APP_ID`
-- `FIREBASE_ADMIN_PROJECT_ID`
+- `FIREBASE_ADMIN_PROJECT_ID` (or use the same project's
+  `NEXT_PUBLIC_FIREBASE_PROJECT_ID`)
 - `FIREBASE_ADMIN_CLIENT_EMAIL`
 - `FIREBASE_ADMIN_PRIVATE_KEY` (store the service-account key as a protected secret)
 - `SITE_BASE` (canonical HTTPS URL used for invitation and payment return links)
 
 Firebase Admin credentials are required for server-issued HttpOnly session cookies and
-protected API access. The verified session route also creates a missing user profile
-through Admin Firestore, so verify that the service account can access Firestore. This
-avoids making successful Firebase credentials depend on client-side profile-write rules.
-If any Admin value is missing, sign-in fails closed with a clear configuration response
-rather than leaving the browser with a half-authenticated session.
+protected API access. `FIREBASE_ADMIN_PROJECT_ID` may reuse
+`NEXT_PUBLIC_FIREBASE_PROJECT_ID` when both identify the same Firebase project; the
+service-account email and private key must still be configured. The verified session
+route also creates a missing user profile through Admin Firestore, so verify that the
+service account can access Firestore. This avoids making successful Firebase credentials
+depend on client-side profile-write rules. If required Admin configuration is missing,
+sign-in fails closed rather than leaving the browser with a half-authenticated session.
+Use `/api/version` to confirm which project-ID setting is active and whether the Admin
+module initializes; it never returns credential values.
 Set `SITE_BASE` to the canonical production origin (for example, `https://briefgroup.net`);
 the server requires this value in production instead of deriving invitation links from
 the request Host header.
