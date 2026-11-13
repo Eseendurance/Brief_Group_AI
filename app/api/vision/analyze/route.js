@@ -8,9 +8,8 @@ import { generateGeminiText } from '@/lib/ai-provider';
 
 export const runtime = 'nodejs';
 
-// Real computer-vision inspection using Gemini's vision capability.
-// The user uploads a photo of equipment (panel, transformer, wiring); Gemini
-// analyzes the actual image for visible fault indicators (rust, scorch marks,
+// Computer-vision inspection of user-uploaded equipment photos.
+// The service analyzes the image for visible fault indicators (rust, scorch marks,
 // exposed wiring, cracking, corrosion) and returns a structured finding.
 // This calls the real model on the real uploaded image — it is not a mock classifier.
 
@@ -89,6 +88,12 @@ and set confidence to "Low" rather than guessing.`;
       imageData: imageBase64,
       mimeType: mediaType,
     });
+    if (!geminiResponse.ok) {
+      return NextResponse.json(
+        { error: geminiResponse.error || 'Image analysis is temporarily unavailable. Please try again later.' },
+        { status: 503 },
+      );
+    }
 
     let parsed;
     try {

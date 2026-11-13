@@ -72,7 +72,7 @@ export async function POST(request) {
     });
 
     if (!result.ok) {
-      return NextResponse.json({ error: result.error || 'Gemini request failed' }, { status: 503 });
+      return NextResponse.json({ error: result.error || 'The assistant is temporarily unavailable. Please try again later.' }, { status: 503 });
     }
 
     return NextResponse.json({ reply: result.text || '' });

@@ -47,7 +47,10 @@ export default function AssistantPage() {
       });
       setMessages((prev) => [...prev, { role: 'assistant', content: result.reply }]);
     } catch (err) {
-      setError(err.message);
+      console.error('[ASSISTANT_REQUEST_ERROR]', err);
+      setError(err.code === 'failed-precondition'
+        ? 'The assistant data service is getting ready. Please try again shortly.'
+        : err.message || 'The assistant could not complete your request. Please try again.');
     } finally {
       setSending(false);
     }
@@ -57,7 +60,7 @@ export default function AssistantPage() {
     <div className="p-6 sm:p-8 max-w-3xl mx-auto flex flex-col h-screen">
       <div className="mb-6 shrink-0">
         <h1 className="font-display font-semibold text-2xl flex items-center gap-2"><MessageSquare className="text-cyan" size={22} /> AI Assistant</h1>
-        <p className="text-ink-300 text-sm mt-1">Powered by Gemini, grounded in your real energy data.</p>
+        <p className="text-ink-300 text-sm mt-1">Ask about your operations, with answers informed by the energy readings saved to your account.</p>
       </div>
 
       <div className="flex-1 overflow-y-auto space-y-4 mb-4 pr-1">

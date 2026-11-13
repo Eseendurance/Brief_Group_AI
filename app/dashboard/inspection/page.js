@@ -68,7 +68,7 @@ export default function InspectionPage() {
       await uploadBytes(storageRef, file);
       const imageUrl = await getDownloadURL(storageRef);
 
-      // Real Gemini vision analysis of the actual uploaded image
+      // Analyze the uploaded image for visible equipment fault indicators.
       const imageBase64 = await fileToBase64(file);
       const data = await authedFetch('/api/vision/analyze', {
         method: 'POST',
@@ -86,7 +86,7 @@ export default function InspectionPage() {
     <div className="p-6 sm:p-8 max-w-5xl mx-auto">
       <div className="mb-8">
         <h1 className="font-display font-semibold text-2xl flex items-center gap-2"><Eye className="text-cyan" size={22} /> Computer Vision Inspection</h1>
-        <p className="text-ink-300 text-sm mt-1">Upload a photo of equipment — Gemini examines the actual image for visible fault indicators.</p>
+        <p className="text-ink-300 text-sm mt-1">Upload an equipment photo for an AI-assisted review of visible fault indicators. Confirm findings with a qualified inspector.</p>
       </div>
 
       <form onSubmit={handleAnalyze} className="card p-6 mb-6">

@@ -26,7 +26,7 @@ export async function POST(request) {
     return NextResponse.json({ error: 'Viewer accounts cannot generate or save reports.' }, { status: 403 });
   }
 
-  // Report generation is a longer, more expensive Gemini call — capped tighter than chat.
+  // Report generation is a longer, more expensive AI request — capped tighter than chat.
   const rate = await checkRateLimit('reports', authResult.uid, 15, '1 d');
   const rateFailure = rateLimitFailure(rate, `Daily report limit reached. Try again after ${rate.resetAt}.`);
   if (rateFailure) {
@@ -71,7 +71,7 @@ ${JSON.stringify(data, null, 2)}`;
     });
 
     if (!geminiResponse.ok) {
-      return NextResponse.json({ error: geminiResponse.error || 'Report generation failed' }, { status: 503 });
+      return NextResponse.json({ error: geminiResponse.error || 'Report generation is temporarily unavailable. Please try again later.' }, { status: 503 });
     }
 
     const reportText = geminiResponse.text || '';
